@@ -47,7 +47,6 @@ const Dashboard = () => {
                     const res = await axiosSecure.get(`/users/role/${user.email}`);
                     setRole(res.data?.role);
                     console.log(setRole);
-
                     // Redirect based on role
                     if (res.data?.role === "user") {
                         navigate("/dashboard/analytics");
