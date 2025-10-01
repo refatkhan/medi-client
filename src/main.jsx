@@ -9,6 +9,8 @@ import { router } from "./Router/Route.jsx";
 import AuthProvider from "./Provider/AuthProvider.jsx";
 import { HelmetProvider } from "react-helmet-async";
 import ThemeProvider from "./Provider/ThemeProvider.jsx";
+import { ToastContainer } from "react-toastify"; // <- import ToastContainer
+import "react-toastify/dist/ReactToastify.css"; // <- import toast styles
 
 //const stripePromise = loadStripe(import.meta.env.VITE_payment_key);
 const queryClient = new QueryClient();
@@ -20,10 +22,20 @@ createRoot(document.getElementById("root")).render(
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <RouterProvider router={router} />
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+            />
           </AuthProvider>
         </QueryClientProvider>
       </HelmetProvider>
     </ThemeProvider>
-
   </StrictMode>
 );

@@ -12,11 +12,12 @@ import {
     Typography,
     TextField,
     InputLabel,
+    Avatar,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { Link, useNavigate } from "react-router";
 import { FcGoogle } from "react-icons/fc";
-import { FaEye, FaEyeSlash, FaStethoscope } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaStethoscope, FaUpload } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../Provider/AuthProvider";
 import { imageUpload } from "../../api/utils";
@@ -25,7 +26,7 @@ import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import { useForm, Controller } from "react-hook-form";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
-import animationData from "../../assets/Welcome.json"; // Replace with your Lottie JSON
+import animationData from "../../assets/Welcome.json";
 
 const SignUp = () => {
     const { createUser, updateUserProfile, signInWithGoogle, loading, setUser } =
@@ -34,17 +35,12 @@ const SignUp = () => {
     const queryClient = useQueryClient();
     const axiosSecure = useAxiosSecure();
 
-    const {
-        handleSubmit,
-        control,
-        setValue,
-        watch,
-        formState: { errors },
-    } = useForm();
+    const { handleSubmit, control, setValue, watch, formState: { errors } } = useForm();
+    const fileInputRef = useRef(null);
 
     const [showPass, setShowPass] = useState(false);
-    const fileInputRef = useRef(null);
-    const selectedFileName = watch("image")?.[0]?.name || "";
+    const [previewImage, setPreviewImage] = useState(null);
+    const selectedFileName = watch("image")?.[0]?.name || "Upload Profile Image";
 
     const addUserToDB = useMutation({
         mutationFn: async (userInfo) => {
@@ -58,10 +54,22 @@ const SignUp = () => {
         },
     });
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        setValue("image", e.target.files);
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => setPreviewImage(reader.result);
+            reader.readAsDataURL(file);
+        } else {
+            setPreviewImage(null);
+        }
+    };
+
     const onSubmit = async (data) => {
         const { name, email, password, image } = data;
-        if (!image || image.length === 0)
-            return toast.error("Please select a profile image!");
+        if (!image || image.length === 0) return toast.error("Please select a profile image!");
+
         try {
             const imageUrl = await imageUpload(image[0]);
             const result = await createUser(email, password);
@@ -100,7 +108,6 @@ const SignUp = () => {
                 last_log_in: new Date().toISOString(),
             };
             await addUserToDB.mutateAsync(userData);
-
             toast.success("Google Signup successful! Welcome to MediCamp.");
             navigate("/");
         } catch (err) {
@@ -116,8 +123,10 @@ const SignUp = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "linear-gradient(135deg, #c3ecb2, #89f7fe)",
                 py: 6,
+                background: "linear-gradient(270deg, #a1c4fd, #c2e9fb, #89f7fe, #c3ecb2)",
+                backgroundSize: "800% 800%",
+                animation: "gradientBG 15s ease infinite",
             }}
         >
             <Container
@@ -135,7 +144,7 @@ const SignUp = () => {
                     initial={{ opacity: 0, y: -30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
-                    style={{ width: "100%", maxWidth: 400 }}
+                    style={{ width: "100%", maxWidth: 400, order: { xs: 0, md: 1 } }}
                 >
                     <Box display="flex" justifyContent="center" alignItems="center">
                         <Lottie
@@ -143,8 +152,8 @@ const SignUp = () => {
                             loop={true}
                             style={{
                                 width: "100%",
-                                height: "100%",
-                                maxHeight: 400,
+                                maxWidth: 350,
+                                height: "auto",
                             }}
                         />
                     </Box>
@@ -159,25 +168,17 @@ const SignUp = () => {
                     <Box
                         sx={{
                             flex: 1,
-                            p: { xs: 4, md: 5 },
+                            p: { xs: 3, md: 4 },
                             borderRadius: 3,
-                            boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-                            bgcolor: "rgba(255,255,255,0.25)",
-                            background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.3))",
-                            backdropFilter: "blur(20px)",
-                            border: "1px solid rgba(255,255,255,0.3)",
+                            boxShadow: 6,
+                            bgcolor: "rgba(255,255,255,0.9)",
+                            backdropFilter: "blur(10px)",
                             width: { xs: "100%", md: 480 },
                             mt: { xs: 4, md: 0 },
                         }}
                     >
-                        <Box textAlign="center" mb={4}>
-                            <Typography
-                                variant="h4"
-                                color="primary"
-                                fontWeight="bold"
-                                gutterBottom
-                                sx={{ textShadow: "1px 1px 3px rgba(0,0,0,0.2)" }}
-                            >
+                        <Box textAlign="center" mb={3}>
+                            <Typography variant="h4" color="primary" fontWeight="bold" gutterBottom>
                                 MediCamp Sign Up
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
@@ -187,6 +188,7 @@ const SignUp = () => {
 
                         <form onSubmit={handleSubmit(onSubmit)}>
                             <Stack spacing={3}>
+                                {/* Full Name */}
                                 <Controller
                                     name="name"
                                     control={control}
@@ -199,16 +201,11 @@ const SignUp = () => {
                                             error={!!errors.name}
                                             helperText={errors.name?.message}
                                             fullWidth
-                                            sx={{
-                                                background: "rgba(255,255,255,0.6)",
-                                                borderRadius: 2,
-                                                "& .MuiOutlinedInput-root": { borderRadius: 2 },
-                                            }}
                                         />
                                     )}
                                 />
 
-                                {/* File Upload */}
+                                {/* Profile Image Upload */}
                                 <Box>
                                     <input
                                         type="file"
@@ -216,7 +213,7 @@ const SignUp = () => {
                                         accept="image/*"
                                         ref={fileInputRef}
                                         style={{ display: "none" }}
-                                        onChange={(e) => setValue("image", e.target.files)}
+                                        onChange={handleImageChange}
                                     />
                                     <Button
                                         variant="outlined"
@@ -234,25 +231,28 @@ const SignUp = () => {
                                             "&:hover": {
                                                 background: "linear-gradient(90deg, #1976d2, #42a5f5)",
                                                 color: "#fff",
-                                                boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                                                boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
                                             },
                                             transition: "all 0.3s ease",
                                         }}
                                     >
-                                        {selectedFileName ? selectedFileName : "Upload Profile Image"}
+                                        {selectedFileName}
                                     </Button>
+                                    {previewImage && (
+                                        <Box display="flex" justifyContent="center" mt={2}>
+                                            <Avatar src={previewImage} alt="Preview" sx={{ width: 80, height: 80 }} />
+                                        </Box>
+                                    )}
                                 </Box>
 
+                                {/* Email */}
                                 <Controller
                                     name="email"
                                     control={control}
                                     defaultValue=""
                                     rules={{
                                         required: "Email is required",
-                                        pattern: {
-                                            value: /\S+@\S+\.\S+/,
-                                            message: "Enter a valid email",
-                                        },
+                                        pattern: { value: /\S+@\S+\.\S+/, message: "Enter a valid email" },
                                     }}
                                     render={({ field }) => (
                                         <TextField
@@ -262,15 +262,11 @@ const SignUp = () => {
                                             error={!!errors.email}
                                             helperText={errors.email?.message}
                                             fullWidth
-                                            sx={{
-                                                background: "rgba(255,255,255,0.6)",
-                                                borderRadius: 2,
-                                                "& .MuiOutlinedInput-root": { borderRadius: 2 },
-                                            }}
                                         />
                                     )}
                                 />
 
+                                {/* Password */}
                                 <Controller
                                     name="password"
                                     control={control}
@@ -280,11 +276,7 @@ const SignUp = () => {
                                         minLength: { value: 6, message: "Min 6 characters" },
                                     }}
                                     render={({ field }) => (
-                                        <FormControl
-                                            variant="outlined"
-                                            fullWidth
-                                            sx={{ background: "rgba(255,255,255,0.6)", borderRadius: 2 }}
-                                        >
+                                        <FormControl variant="outlined" fullWidth>
                                             <InputLabel htmlFor="password">Password</InputLabel>
                                             <OutlinedInput
                                                 {...field}
@@ -292,16 +284,12 @@ const SignUp = () => {
                                                 type={showPass ? "text" : "password"}
                                                 endAdornment={
                                                     <InputAdornment position="end">
-                                                        <IconButton
-                                                            onClick={() => setShowPass(!showPass)}
-                                                            edge="end"
-                                                        >
+                                                        <IconButton onClick={() => setShowPass(!showPass)} edge="end">
                                                             {showPass ? <FaEyeSlash /> : <FaEye />}
                                                         </IconButton>
                                                     </InputAdornment>
                                                 }
                                                 label="Password"
-                                                sx={{ borderRadius: 2 }}
                                             />
                                             {errors.password && (
                                                 <Typography color="error" variant="caption">
@@ -312,7 +300,6 @@ const SignUp = () => {
                                     )}
                                 />
 
-                                {/* Register Button */}
                                 <Button
                                     type="submit"
                                     variant="contained"
@@ -326,78 +313,57 @@ const SignUp = () => {
                                         "&:hover": {
                                             background: "linear-gradient(90deg, #42a5f5, #1976d2)",
                                         },
-                                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                                         transition: "all 0.3s ease",
                                     }}
                                     startIcon={loading && <FaStethoscope className="animate-pulse" />}
                                 >
                                     {loading ? "Registering..." : "Register Now"}
                                 </Button>
-
-                                {/* Google Sign-In Button */}
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    onClick={handleGoogleSignIn}
-                                    startIcon={<FcGoogle />}
-                                    sx={{
-                                        mt: 2,
-                                        background: "linear-gradient(90deg, #f44336, #ff7961)",
-                                        color: "#fff",
-                                        fontWeight: 600,
-                                        py: 1.5,
-                                        borderRadius: 2,
-                                        "&:hover": {
-                                            background: "linear-gradient(90deg, #ff7961, #f44336)",
-                                        },
-                                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                                        transition: "all 0.3s ease",
-                                    }}
-                                >
-                                    Continue with Google
-                                </Button>
                             </Stack>
                         </form>
 
+                        {/* Divider */}
                         <Box my={3} display="flex" alignItems="center">
                             <Divider sx={{ flexGrow: 1 }} />
                             <Typography sx={{ mx: 2 }} variant="body2" color="text.secondary">
-                                or already have an account?
+                                or continue with
                             </Typography>
                             <Divider sx={{ flexGrow: 1 }} />
                         </Box>
 
-                        <Box
-                            display="flex"
-                            justifyContent="center"
-                            alignItems="center"
-                            mt={3}
-                            gap={1}
+                        {/* Google Signup */}
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={handleGoogleSignIn}
+                            startIcon={<FcGoogle />}
+                            sx={{
+                                mt: 2,
+                                background: "linear-gradient(90deg, #f44336, #ff7961)",
+                                color: "#fff",
+                                fontWeight: 600,
+                                py: 1.5,
+                                borderRadius: 2,
+                                "&:hover": {
+                                    background: "linear-gradient(90deg, #ff7961, #f44336)",
+                                },
+                                transition: "all 0.3s ease",
+                            }}
                         >
+                            Continue with Google
+                        </Button>
+
+                        {/* Login link */}
+                        <Box display="flex" justifyContent="center" alignItems="center" mt={3} gap={1}>
                             <Typography variant="body2" color="text.secondary">
-                                Already have an account ?
+                                Already have an account?
                             </Typography>
-                            <Button
-                                component={Link}
+                            <Link
                                 to="/sign-in"
-                                variant="text"
-                                sx={{
-                                    color: "primary.main",
-                                    fontWeight: 600,
-                                    textTransform: "none",
-                                    background: "linear-gradient(90deg, #1976d2, #42a5f5)",
-                                    WebkitBackgroundClip: "text",
-                                    WebkitTextFillColor: "transparent",
-                                    "&:hover": {
-                                        opacity: 0.8,
-                                        background: "linear-gradient(90deg, #42a5f5, #1976d2)",
-                                        WebkitBackgroundClip: "text",
-                                        WebkitTextFillColor: "transparent",
-                                    },
-                                }}
+                                style={{ color: "#1976d2", fontWeight: 600, textDecoration: "none" }}
                             >
                                 Login
-                            </Button>
+                            </Link>
                         </Box>
                     </Box>
                 </motion.div>

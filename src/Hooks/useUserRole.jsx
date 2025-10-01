@@ -7,7 +7,7 @@ const useUserRole = () => {
     const axiosSecure = useAxiosSecure();
 
     const {
-        data: role = "participant",
+        data: role = "user",
         isLoading: roleLoading,
         refetch,
     } = useQuery({
