@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Link, useLocation, useNavigate } from "react-router"; // Corrected import
+import { Link, useLocation, useNavigate } from "react-router";
 import { AuthContext } from "../../Provider/AuthProvider";
 import { toast } from "react-toastify";
 import {
@@ -13,7 +13,7 @@ import {
     Typography,
     Box,
 } from "@mui/material";
-import { Logout, Login, Menu as MenuIcon, AccountCircle } from "@mui/icons-material";
+import { Logout, Login, AccountCircle, PersonAdd } from "@mui/icons-material";
 import useUserRole from "../../Hooks/useUserRole";
 
 const Navbar = () => {
@@ -49,16 +49,18 @@ const Navbar = () => {
 
     const navLinkClass = (path) =>
         `transition duration-200 ${pathname === path
-            ? "text-blue-800 font-semibold "
+            ? "text-blue-800 font-semibold"
             : "text-gray-700 hover:text-blue-600"
         }`;
 
     return (
         <AppBar
             position="sticky"
-            color="default"
             elevation={1}
-            sx={{ bgcolor: "white", px: 2 }}
+            sx={{
+                px: 2,
+                background: "linear-gradient(90deg, #4facfe 0%, #00f2fe 100%)",
+            }}
         >
             <Toolbar className="flex justify-between items-center">
                 {/* Logo */}
@@ -67,8 +69,7 @@ const Navbar = () => {
                     sx={{ cursor: "pointer" }}
                     className="flex items-center gap-2"
                 >
-                    {/* <img className="h-10 w-10" src={} alt="logo" /> */}
-                    <Typography variant="h6" color="primary" fontWeight="bold">
+                    <Typography variant="h6" color="white" fontWeight="bold">
                         MediCamp
                     </Typography>
                 </Box>
@@ -136,19 +137,42 @@ const Navbar = () => {
                         </>
                     ) : (
                         <Box className="flex gap-2">
+                            {/* Sign Up Button */}
                             <Button
-                                variant={pathname === "/sign-in" ? "contained" : "outlined"}
-                                onClick={() => navigate("/sign-in")}
-                                startIcon={<Login />}
-                            >
-                                Sign In
-                            </Button>
-                            <Button
-                                variant={pathname === "/sign-up" ? "contained" : "outlined"}
                                 onClick={() => navigate("/sign-up")}
+                                startIcon={<PersonAdd />}
+                                sx={{
+                                    background: "linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)",
+                                    color: "white",
+                                    fontWeight: "bold",
+                                    textTransform: "none",
+                                    boxShadow: "0px 4px 15px rgba(0,0,0,0.2)",
+                                    "&:hover": {
+                                        background: "linear-gradient(135deg, #ff4b2b 0%, #ff416c 100%)",
+                                        boxShadow: "0px 6px 20px rgba(0,0,0,0.3)",
+                                    },
+                                }}
                             >
                                 Sign Up
                             </Button>
+                            <Button
+                                onClick={() => navigate("/sign-in")}
+                                startIcon={<Login />}
+                                sx={{
+                                    background: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
+                                    color: "white",
+                                    fontWeight: "bold",
+                                    textTransform: "none",
+                                    boxShadow: "0px 4px 15px rgba(0,0,0,0.2)",
+                                    "&:hover": {
+                                        background: "linear-gradient(135deg, #2575fc 0%, #6a11cb 100%)",
+                                        boxShadow: "0px 6px 20px rgba(0,0,0,0.3)",
+                                    },
+                                }}
+                            >
+                                Sign In
+                            </Button>
+
                         </Box>
                     )}
                 </Box>
