@@ -25,6 +25,7 @@ const PaymentHistory = () => {
     } = useQuery({
         queryKey: ["payment-history", user?.email],
         queryFn: async () => {
+            // eslint-disable-next-line no-useless-catch
             try {
                 const res = await axiosSecure.get(
                     `/payment-history?email=${user?.email}`
@@ -38,27 +39,26 @@ const PaymentHistory = () => {
     });
 
     const filteredPaymentHistory = paymentHistory.filter((payment) => {
-        const isPaid = payment.status?.toLowerCase() === "paid";
+        const isPaid = payment?.status?.toLowerCase() === "paid";
         const matchesSearch =
-            payment.campName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            payment.registeredAt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            payment.doctorName?.toLowerCase().includes(searchTerm.toLowerCase());
+            payment?.campName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            payment?.registeredAt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            payment?.doctorName?.toLowerCase().includes(searchTerm.toLowerCase());
         return isPaid && matchesSearch;
     });
-
     const columns = [
         {
             field: "campName",
             headerName: "Camp Name",
             flex: 1,
-            valueGetter: (params) => params.row.campName || "N/A",
+            valueGetter: (params) => params.row?.campName || "N/A",
         },
         {
             field: "registeredAt",
             headerName: "Date",
             flex: 1,
             valueGetter: (params) =>
-                params.row.registeredAt
+                params.row?.registeredAt
                     ? new Date(params.row.registeredAt).toLocaleDateString()
                     : "N/A",
         },
@@ -66,32 +66,32 @@ const PaymentHistory = () => {
             field: "doctorName",
             headerName: "Healthcare Professional",
             flex: 1,
-            valueGetter: (params) => params.row.doctorName || "N/A",
+          valueGetter: (params) => params.row?.doctorName || "N/A",
         },
         {
             field: "fees",
             headerName: "Fees",
             flex: 0.7,
-            valueGetter: (params) => (params.row.fees ? `$${params.row.fees}` : "N/A"),
+          valueGetter: (params) => (params.row?.fees ? `$${params.row.fees}` : "N/A"),
             type: "number",
         },
         {
             field: "status",
             headerName: "Payment Status",
             flex: 0.8,
-            valueGetter: (params) => params.row.status || "N/A",
+            valueGetter: (params) => params.row?.status || "N/A",
         },
         {
             field: "confirmationStatus",
             headerName: "Confirmation Status",
             flex: 0.8,
-            valueGetter: (params) => params.row.confirmationStatus || "N/A",
+            valueGetter: (params) => params.row?.confirmationStatus || "N/A",
         },
         {
             field: "transactionId",
             headerName: "Transaction ID",
             flex: 1,
-            valueGetter: (params) => params.row.transactionId || "N/A",
+            valueGetter: (params) => params.row?.transactionId || "N/A",
         },
     ];
 
