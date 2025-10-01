@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ErrrorPage = () => {
+const ParticipantAnalytics = () => {
     return (
         <div>
             
@@ -8,4 +8,4 @@ const ErrrorPage = () => {
     );
 };
 
-export default ErrrorPage;
+export default ParticipantAnalytics;

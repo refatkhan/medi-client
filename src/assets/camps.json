@@ -1,0 +1,22 @@
+[
+  { "id": 1, "name": "Camp 1", "lat": 23.8103, "lng": 90.4125 },
+  { "id": 2, "name": "Camp 2", "lat": 24.9, "lng": 91.8333 },
+  { "id": 3, "name": "Camp 3", "lat": 22.3569, "lng": 91.7832 },
+  { "id": 4, "name": "Camp 4", "lat": 23.685, "lng": 90.3563 },
+  { "id": 5, "name": "Camp 5", "lat": 22.8456, "lng": 89.5403 },
+  { "id": 6, "name": "Camp 6", "lat": 24.473, "lng": 88.9636 },
+  { "id": 7, "name": "Camp 7", "lat": 25.7439, "lng": 89.2756 },
+  { "id": 8, "name": "Camp 8", "lat": 23.2336, "lng": 90.4454 },
+  { "id": 9, "name": "Camp 9", "lat": 22.6351, "lng": 90.2043 },
+  { "id": 10, "name": "Camp 10", "lat": 24.9045, "lng": 91.871 },
+  { "id": 11, "name": "Camp 11", "lat": 22.356, "lng": 90.3333 },
+  { "id": 12, "name": "Camp 12", "lat": 23.45, "lng": 91.783 },
+  { "id": 13, "name": "Camp 13", "lat": 22.5, "lng": 89.5 },
+  { "id": 14, "name": "Camp 14", "lat": 23.7, "lng": 90.35 },
+  { "id": 15, "name": "Camp 15", "lat": 24.0, "lng": 91.5 },
+  { "id": 16, "name": "Camp 16", "lat": 22.95, "lng": 90.2 },
+  { "id": 17, "name": "Camp 17", "lat": 23.15, "lng": 90.5 },
+  { "id": 18, "name": "Camp 18", "lat": 22.8, "lng": 90.0 },
+  { "id": 19, "name": "Camp 19", "lat": 23.5, "lng": 91.0 },
+  { "id": 20, "name": "Camp 20", "lat": 24.2, "lng": 90.9 }
+]

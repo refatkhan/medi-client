@@ -1,0 +1,22 @@
+[
+  { "id": 1, "name": "Rangamati Sadar", "lat": 22.616, "lng": 92.218 },
+  { "id": 2, "name": "Cox's Bazar", "lat": 21.4272, "lng": 92.0058 },
+  { "id": 3, "name": "Bandarban Sadar", "lat": 22.195, "lng": 92.218 },
+  { "id": 4, "name": "Khagrachari", "lat": 23.119, "lng": 91.987 },
+  { "id": 5, "name": "Bagerhat", "lat": 22.663, "lng": 89.791 },
+  { "id": 6, "name": "Patuakhali", "lat": 22.359, "lng": 90.333 },
+  { "id": 7, "name": "Bhola", "lat": 22.685, "lng": 90.65 },
+  { "id": 8, "name": "Noakhali", "lat": 22.82, "lng": 91.1 },
+  { "id": 9, "name": "Lakshmipur", "lat": 22.95, "lng": 90.85 },
+  { "id": 10, "name": "Feni", "lat": 23.015, "lng": 91.4 },
+  { "id": 11, "name": "Sunamganj", "lat": 24.9, "lng": 91.27 },
+  { "id": 12, "name": "Habiganj", "lat": 24.383, "lng": 91.45 },
+  { "id": 13, "name": "Sherpur", "lat": 25.025, "lng": 90.016 },
+  { "id": 14, "name": "Gaibandha", "lat": 25.1, "lng": 89.55 },
+  { "id": 15, "name": "Kurigram", "lat": 25.8, "lng": 89.64 },
+  { "id": 16, "name": "Sirajganj", "lat": 24.45, "lng": 89.7 },
+  { "id": 17, "name": "Panchagarh", "lat": 26.35, "lng": 88.55 },
+  { "id": 18, "name": "Thakurgaon", "lat": 26.033, "lng": 88.467 },
+  { "id": 19, "name": "Dinajpur", "lat": 25.62, "lng": 88.633 },
+  { "id": 20, "name": "Joypurhat", "lat": 25.1, "lng": 89.03 }
+]
