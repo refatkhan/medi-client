@@ -66,13 +66,13 @@ const PaymentHistory = () => {
             field: "doctorName",
             headerName: "Healthcare Professional",
             flex: 1,
-          valueGetter: (params) => params.row?.doctorName || "N/A",
+            valueGetter: (params) => params.row?.doctorName || "N/A",
         },
         {
             field: "fees",
             headerName: "Fees",
             flex: 0.7,
-          valueGetter: (params) => (params.row?.fees ? `$${params.row.fees}` : "N/A"),
+            valueGetter: (params) => (params.row?.fees ? `$${params.row.fees}` : "N/A"),
             type: "number",
         },
         {

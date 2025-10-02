@@ -6,13 +6,9 @@ import { Helmet } from "react-helmet-async";
 import {
     Box,
     Grid,
-    Card,
-    CardMedia,
-    CardContent,
     Typography,
     TextField,
     MenuItem,
-    Button,
     InputAdornment,
     ToggleButton,
     ToggleButtonGroup,
@@ -20,7 +16,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
-
+import { Button } from "@mui/material";
 const AvailableCamps = () => {
     const axiosSecure = useAxiosSecure();
     const [searchTerm, setSearchTerm] = useState("");
@@ -144,7 +140,7 @@ const AvailableCamps = () => {
                                     "& .MuiOutlinedInput-root": {
                                         borderRadius: "50px",
                                         backgroundColor: "#f1f3f4",
-                                        px: 3, // horizontal padding for fancy look
+                                        px: 3,
                                         fontWeight: 500,
                                     },
                                 }}
@@ -159,85 +155,61 @@ const AvailableCamps = () => {
                 </Grid>
             </Grid>
 
-            {/* Camps Grid */}
-            <Grid container spacing={4}>
+            {/* Camps Grid - Tailwind */}
+            <div
+                className={`grid gap-6 ${layoutColumns === 3
+                    ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                    : "grid-cols-1 sm:grid-cols-2"
+                    }`}
+            >
                 {filteredCamps.map((camp) => (
-                    <Grid
-                        item
+                    <div
                         key={camp._id}
-                        xs={12}
-                        sm={6}
-                        md={layoutColumns === 3 ? 4 : 6}
+                        className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 flex flex-col"
                     >
-                        <Card
-                            sx={{
-                                height: "100%",
-                                display: "flex",
-                                flexDirection: "column",
-                                transition: "0.3s",
-                                "&:hover": { boxShadow: 6 },
-                            }}
-                        >
-                            <CardMedia
-                                component="img"
-                                height="200"
-                                image={camp.image}
-                                alt={camp.campName}
-                            />
-                            <CardContent sx={{ flexGrow: 1 }}>
-                                <Typography variant="h6" color="primary" fontWeight="bold">
-                                    {camp.campName}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    📍 {camp.location}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    💰 ${camp.fees}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    🗓️ {camp.dateTime}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    👨‍⚕️ {camp.doctorName}
-                                </Typography>
-                                <Typography
-                                    variant="body2"
-                                    color="success.main"
-                                    fontWeight="medium"
-                                >
-                                    👥 {camp.participants || 0} Participants
-                                </Typography>
-                                <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                    sx={{
-                                        mt: 1,
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        display: "-webkit-box",
-                                        WebkitLineClamp: 2,
-                                        WebkitBoxOrient: "vertical",
-                                    }}
-                                >
-                                    {camp.description}
-                                </Typography>
+                        <img
+                            src={camp.image}
+                            alt={camp.campName}
+                            className="h-52 w-full object-cover rounded-t-xl"
+                        />
+                        <div className="p-4 flex flex-col flex-grow">
+                            <h3 className="text-lg font-bold text-blue-600">{camp.campName}</h3>
+                            <p className="text-sm text-gray-500">📍 {camp.location}</p>
+                            <p className="text-sm text-gray-500">💰 ${camp.fees}</p>
+                            <p className="text-sm text-gray-500">🗓️ {camp.dateTime}</p>
+                            <p className="text-sm text-gray-500">👨‍⚕️ {camp.doctorName}</p>
+                            <p className="text-sm text-green-600 font-medium">
+                                👥 {camp.participants || 0} Participants
+                            </p>
+                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                                {camp.description}
+                            </p>
 
-                                <Box mt={2}>
+                            <div className="mt-auto pt-4">
+                                <RouterLink to={`/camp-details/${camp._id}`}>
                                     <Button
-                                        component={RouterLink}
-                                        to={`/camp-details/${camp._id}`}
                                         variant="contained"
-                                        color="primary"
                                         size="small"
+                                        sx={{
+                                            background: "linear-gradient(to right, #3b82f6, #6366f1)", // blue-500 → indigo-500
+                                            textTransform: "none",
+                                            borderRadius: "8px",
+                                            px: 2.5,
+                                            py: 1,
+                                            fontSize: "0.85rem",
+                                            "&:hover": {
+                                                background: "linear-gradient(to right, #2563eb, #4f46e5)", // darker on hover
+                                            },
+                                        }}
                                     >
                                         View Details
                                     </Button>
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
+                                </RouterLink>
+                            </div>
+                        </div>
+                    </div>
                 ))}
-            </Grid>
+            </div>
 
             {filteredCamps.length === 0 && (
                 <Typography textAlign="center" color="text.secondary" mt={4}>

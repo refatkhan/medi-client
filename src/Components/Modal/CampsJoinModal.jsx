@@ -18,7 +18,7 @@ import { motion } from "framer-motion";
 import Swal from "sweetalert2";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
 
-const CampsJoinModal = ({ visible, onClose, camp, onSubmit, user }) => {
+const CampsJoinModal = ({ visible, onClose, camp, onJoined, user }) => {
     const { control, handleSubmit, reset } = useForm();
     const axiosSecure = useAxiosSecure();
     const [loading, setLoading] = useState(false);
@@ -32,8 +32,7 @@ const CampsJoinModal = ({ visible, onClose, camp, onSubmit, user }) => {
                         `/check-join-status?email=${user.email}&campId=${camp._id}`
                     );
                     setHasJoined(res.data.joined);
-                } catch (error) {
-                    console.log("Error checking join status:", error);
+                } catch {
                     setHasJoined(false);
                 }
             }
@@ -45,15 +44,21 @@ const CampsJoinModal = ({ visible, onClose, camp, onSubmit, user }) => {
         if (loading || hasJoined) return;
         setLoading(true);
 
-        try {
-            const response = await axiosSecure.post("/camps-join", {
-                ...formData,
-                status: "unpaid",
-                campId: camp?._id,
-                organizerEmail: camp?.organizerEmail,
-                confirmationStatus: "Pending",
-            });
+        const payload = {
+            email: user.email,
+            campId: camp._id,
+            status: "unpaid",
+            organizerEmail: camp.organizerEmail,
+            confirmationStatus: "Pending",
+            participantName: user.displayName,
+            age: formData.age,
+            phone: formData.phone,
+            gender: formData.gender,
+            emergencyContact: formData.emergencyContact,
+        };
 
+        try {
+            const response = await axiosSecure.post("/camps-join", payload);
             if (response.data.success) {
                 Swal.fire(
                     "Success",
@@ -61,7 +66,7 @@ const CampsJoinModal = ({ visible, onClose, camp, onSubmit, user }) => {
                     "success"
                 );
                 setHasJoined(true);
-                onSubmit({ ...formData, status: "unpaid" });
+                onJoined(); // update parent button immediately
                 reset();
                 onClose();
             }
@@ -71,13 +76,10 @@ const CampsJoinModal = ({ visible, onClose, camp, onSubmit, user }) => {
                 "You have already registered for this camp"
             ) {
                 setHasJoined(true);
-                Swal.fire(
-                    "Warning",
-                    "You have already registered for this camp",
-                    "warning"
-                );
+                onJoined();
+                Swal.fire("Info", "You have already joined this camp", "info");
+                onClose();
             } else {
-                console.error("Registration error:", error);
                 Swal.fire("Error", "Registration failed", "error");
             }
         } finally {
@@ -86,20 +88,24 @@ const CampsJoinModal = ({ visible, onClose, camp, onSubmit, user }) => {
     };
 
     return (
-        <Dialog open={visible} onClose={onClose} fullWidth maxWidth="sm">
+        <Dialog
+            open={visible}
+            onClose={onClose}
+            fullWidth
+            maxWidth="sm"
+            disableEnforceFocus
+        >
             <DialogTitle
                 sx={{
                     background: "linear-gradient(to right, #6a11cb, #2575fc)",
                     color: "#fff",
                     textAlign: "center",
                     fontWeight: "bold",
-                    fontSize: "1.5rem",
                 }}
             >
                 Join Medical Camp
             </DialogTitle>
             <DialogContent sx={{ p: 0, mt: 2 }}>
-                {/* Motion Card for full form */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -118,38 +124,6 @@ const CampsJoinModal = ({ visible, onClose, camp, onSubmit, user }) => {
                         }}
                     >
                         <Controller
-                            name="campName"
-                            control={control}
-                            defaultValue={camp?.campName || ""}
-                            render={({ field }) => (
-                                <TextField {...field} label="Camp Name" fullWidth disabled />
-                            )}
-                        />
-                        <Controller
-                            name="fees"
-                            control={control}
-                            defaultValue={camp?.fees || ""}
-                            render={({ field }) => (
-                                <TextField {...field} label="Fees" fullWidth disabled />
-                            )}
-                        />
-                        <Controller
-                            name="location"
-                            control={control}
-                            defaultValue={camp?.location || ""}
-                            render={({ field }) => (
-                                <TextField {...field} label="Location" fullWidth disabled />
-                            )}
-                        />
-                        <Controller
-                            name="doctorName"
-                            control={control}
-                            defaultValue={camp?.doctorName || ""}
-                            render={({ field }) => (
-                                <TextField {...field} label="Doctor Name" fullWidth disabled />
-                            )}
-                        />
-                        <Controller
                             name="participantName"
                             control={control}
                             defaultValue={user?.displayName || ""}
@@ -163,29 +137,20 @@ const CampsJoinModal = ({ visible, onClose, camp, onSubmit, user }) => {
                             )}
                         />
                         <Controller
-                            name="email"
-                            control={control}
-                            defaultValue={user?.email || ""}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    label="Your Email"
-                                    fullWidth
-                                    InputProps={{ readOnly: true }}
-                                />
-                            )}
-                        />
-                        <Controller
                             name="age"
                             control={control}
                             defaultValue=""
-                            render={({ field }) => <TextField {...field} label="Age" type="number" fullWidth />}
+                            render={({ field }) => (
+                                <TextField {...field} label="Age" type="number" fullWidth />
+                            )}
                         />
                         <Controller
                             name="phone"
                             control={control}
                             defaultValue=""
-                            render={({ field }) => <TextField {...field} label="Phone Number" fullWidth />}
+                            render={({ field }) => (
+                                <TextField {...field} label="Phone Number" fullWidth />
+                            )}
                         />
                         <Controller
                             name="gender"
@@ -230,13 +195,18 @@ const CampsJoinModal = ({ visible, onClose, camp, onSubmit, user }) => {
                             py: 1.5,
                             borderRadius: 3,
                             fontWeight: "bold",
-                            fontSize: "1rem",
                             "&:hover": {
                                 background: "linear-gradient(to right, #2575fc, #6a11cb)",
                             },
                         }}
                     >
-                        {loading ? <CircularProgress size={24} color="inherit" /> : hasJoined ? "Joined" : "Join Now"}
+                        {loading ? (
+                            <CircularProgress size={24} color="inherit" />
+                        ) : hasJoined ? (
+                            "Joined"
+                        ) : (
+                            "Join Now"
+                        )}
                     </Button>
                 </motion.div>
             </DialogActions>

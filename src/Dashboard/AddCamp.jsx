@@ -81,7 +81,6 @@ const AddCamp = () => {
             mutate(newCamp);
         } catch (error) {
             setImageUploadError("Image upload failed");
-            console.log(error);
             toast.error("Failed to process image.");
         } finally {
             setIsUploading(false);
@@ -162,7 +161,7 @@ const AddCamp = () => {
                                             setImageUploadError(null);
                                         } catch (error) {
                                             setImageUploadError("Image upload failed");
-                                            console.log(error);
+                                            
                                         } finally {
                                             setIsUploading(false);
                                         }

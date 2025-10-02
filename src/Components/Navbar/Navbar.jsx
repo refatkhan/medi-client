@@ -98,13 +98,13 @@ const Navbar = () => {
                 <Box className="flex items-center gap-4">
                     {user ? (
                         <>
-                            <IconButton onClick={handleMenuOpen} size="small">
+                            <IconButton onClick={handleMenuOpen} size="small" sx={{ ml: 1 }}>
                                 <Avatar
-                                    src={user.photoURL}
+                                    src={user.photoURL || undefined}
                                     alt={user.displayName || "User"}
                                     sx={{ width: 40, height: 40 }}
                                 >
-                                    <AccountCircle />
+                                    {!user.photoURL && <AccountCircle />}
                                 </Avatar>
                             </IconButton>
                             <Menu

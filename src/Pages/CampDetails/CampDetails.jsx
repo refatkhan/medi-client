@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import {
     Button,
     Card,
@@ -8,19 +8,18 @@ import {
     CircularProgress,
     Box,
 } from "@mui/material";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import CampsJoinModal from "../../Components/Modal/CampsJoinModal";
 import { AuthContext } from "../../Provider/AuthProvider";
-import Swal from "sweetalert2";
 
 const CampDetails = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [hasJoined, setHasJoined] = useState(false);
     const { user } = useContext(AuthContext);
     const { id } = useParams();
     const axiosSecure = useAxiosSecure();
-    const queryClient = useQueryClient();
 
     // Fetch camp details
     const { data: camp = {}, isLoading: campLoading } = useQuery({
@@ -41,50 +40,23 @@ const CampDetails = () => {
         enabled: !!user?.email,
     });
 
-    // Check join status
-    const { data: joinStatus, isLoading: joinStatusLoading } = useQuery({
-        queryKey: ["joinStatus", user?.email, id],
-        queryFn: async () => {
-            if (!user?.email || !id) return { joined: false };
-            const res = await axiosSecure.get(
-                `/check-join-status?email=${user.email}&campId=${id}`
-            );
-            return res.data;
-        },
-        enabled: !!user?.email && !!id,
-    });
+    // Check if user has joined
+    useEffect(() => {
+        const checkJoinStatus = async () => {
+            if (!user?.email || !id) return;
+            try {
+                const res = await axiosSecure.get(
+                    `/check-join-status?email=${user.email}&campId=${id}`
+                );
+                setHasJoined(res.data.joined);
+            } catch {
+                setHasJoined(false);
+            }
+        };
+        checkJoinStatus();
+    }, [user?.email, id, axiosSecure]);
 
-    // Join camp mutation
-    const mutation = useMutation({
-        mutationFn: async (participantData) => {
-            const res = await axiosSecure.post("/camps-join", participantData);
-            await axiosSecure.patch(`/camps-update-count/${camp._id}`);
-            return res.data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries(["campDetails", id]);
-            queryClient.invalidateQueries(["joinStatus", user?.email, id]);
-            Swal.fire(
-                "Success",
-                "Registration successful! Please pay to confirm.",
-                "success"
-            );
-        },
-        onError: (error) => {
-            Swal.fire("Error", error.message || "Registration failed", "error");
-        },
-    });
-
-    const handleJoin = (formData) => {
-        mutation.mutate({
-            ...formData,
-            campId: camp._id,
-            organizerEmail: camp.organizerEmail,
-        });
-    };
-
-    // Show loader while fetching
-    if (campLoading || roleLoading || joinStatusLoading) {
+    if (campLoading || roleLoading) {
         return (
             <Box display="flex" justifyContent="center" py={10}>
                 <CircularProgress size={60} />
@@ -93,25 +65,31 @@ const CampDetails = () => {
     }
 
     const isOrganizer = userRole?.role === "organizer";
-    const hasJoined = joinStatus?.joined;
     const isDisabled = hasJoined || isOrganizer;
+
+    // Linear gradient based on button state
+    const buttonGradient = hasJoined
+        ? "linear-gradient(to right, #9ca3af, #6b7280)" // gray
+        : isOrganizer
+            ? "linear-gradient(to right, #f87171, #ef4444)" // red
+            : "linear-gradient(to right, #3b82f6, #6366f1)"; // blue-indigo
+
+    const buttonHoverGradient = hasJoined
+        ? "linear-gradient(to right, #6b7280, #4b5563)"
+        : isOrganizer
+            ? "linear-gradient(to right, #ef4444, #dc2626)"
+            : "linear-gradient(to right, #2563eb, #4f46e5)";
 
     return (
         <Box maxWidth="800px" mx="auto" p={2}>
             <Card>
                 {camp.image && (
-                    <CardMedia
-                        component="img"
-                        height="300"
-                        image={camp.image}
-                        alt="camp"
-                    />
+                    <CardMedia component="img" height="300" image={camp.image} alt="camp" />
                 )}
                 <CardContent>
                     <Typography variant="h5" gutterBottom>
                         {camp.campName}
                     </Typography>
-
                     <Typography variant="body1">
                         <strong>Fees:</strong> ${camp.fees}
                     </Typography>
@@ -133,10 +111,19 @@ const CampDetails = () => {
 
                     <Button
                         variant="contained"
-                        color="primary"
-                        sx={{ mt: 3 }}
                         onClick={() => setIsModalOpen(true)}
                         disabled={isDisabled}
+                        sx={{
+                            mt: 3,
+                            background: buttonGradient,
+                            color: "white",
+                            textTransform: "none",
+                            borderRadius: "8px",
+                            px: 2.5,
+                            py: 1,
+                            fontSize: "0.9rem",
+                            "&:hover": { background: buttonHoverGradient },
+                        }}
                     >
                         {hasJoined
                             ? "Already Joined"
@@ -147,13 +134,12 @@ const CampDetails = () => {
                 </CardContent>
             </Card>
 
-            {/* Join Modal */}
             <CampsJoinModal
                 visible={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 camp={camp}
                 user={user}
-                onSubmit={handleJoin}
+                onJoined={() => setHasJoined(true)} // update button immediately
             />
         </Box>
     );

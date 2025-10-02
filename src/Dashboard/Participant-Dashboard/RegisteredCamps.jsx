@@ -20,7 +20,7 @@ import {
   TablePagination,
 } from "@mui/material";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
 import Swal from "sweetalert2";
 
@@ -30,7 +30,6 @@ import { AuthContext } from "../../Provider/AuthProvider";
 const RegisteredCamps = () => {
   const { user } = useContext(AuthContext);
   const axiosSecure = useAxiosSecure();
-  const queryClient = useQueryClient();
   const stripe = useStripe();
   const elements = useElements();
 
@@ -41,29 +40,18 @@ const RegisteredCamps = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const {
-    data: registeredCamps = [],
-    refetch,
-    isLoading,
-  } = useQuery({
+  const { data: registeredCamps = [], refetch, isLoading } = useQuery({
     queryKey: ["registered-camps", user?.email],
     queryFn: async () => {
       const res = await axiosSecure.get(
         `/user-registered-camps?email=${user?.email}`
       );
-      return res.data.map((camp) => ({
-        ...camp,
-        confirmationStatus: camp.confirmationStatus || "Pending",
-      }));
+      return res.data;
     },
     enabled: !!user?.email,
   });
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
+  const { control, handleSubmit } = useForm({
     defaultValues: { cardDetails: "", rating: "", comment: "" },
   });
 
@@ -93,7 +81,7 @@ const RegisteredCamps = () => {
     mutationFn: async (data) =>
       axiosSecure.post("/submit-feedback", {
         campId: selectedCamp._id,
-        participantEmail: user?.displayName,
+        participantEmail: user?.email,
         ...data,
       }),
     onSuccess: () => {
@@ -122,45 +110,31 @@ const RegisteredCamps = () => {
 
     const { data: paymentIntentData } = await axiosSecure.post(
       "/create-payment-intent",
-      {
-        amount: selectedCamp.fees * 100,
-      }
+      { amount: selectedCamp.fees * 100 }
     );
 
     const clientSecret = paymentIntentData.clientSecret;
     const card = elements.getElement(CardElement);
+    if (!card) return Swal.fire("Error", "Card not found", "error");
 
-    if (!card) {
-      Swal.fire("Error", "Card details not found", "error");
-      return;
-    }
-
-    const { paymentIntent, error } = await stripe.confirmCardPayment(
-      clientSecret,
-      {
-        payment_method: {
-          card,
-          billing_details: {
-            name: user?.displayName || "Unknown",
-            email: user?.email || "Unknown",
-          },
+    const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card,
+        billing_details: {
+          name: user?.displayName || "Unknown",
+          email: user?.email || "Unknown",
         },
-      }
-    );
+      },
+    });
 
-    if (error) {
-      Swal.fire("Error", error.message, "error");
-    } else if (paymentIntent.status === "succeeded") {
+    if (error) Swal.fire("Error", error.message, "error");
+    else if (paymentIntent.status === "succeeded") {
       await updatePaymentMutation.mutate({
         status: "paid",
         transactionId: paymentIntent.id,
         confirmationStatus: "Confirmed",
       });
-      Swal.fire(
-        "Success",
-        `Payment successful! Transaction ID: ${paymentIntent.id}`,
-        "success"
-      );
+      Swal.fire("Success", `Payment successful! Transaction ID: ${paymentIntent.id}`, "success");
     }
   };
 
@@ -181,9 +155,7 @@ const RegisteredCamps = () => {
     setIsFeedbackModalOpen(true);
   };
 
-  const onFeedbackSubmit = (formData) => {
-    submitFeedbackMutation.mutate(formData);
-  };
+  const onFeedbackSubmit = (formData) => submitFeedbackMutation.mutate(formData);
 
   const filteredCamps = registeredCamps.filter(
     (camp) =>
@@ -191,38 +163,29 @@ const RegisteredCamps = () => {
       camp.status?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   return (
     <Box
       sx={{
-        px: { xs: 2, sm: 4, lg: 8 },
+        ml: { md: "240px" }, // margin for sidebar
+        px: { xs: 2, sm: 4, lg: 6 },
         py: 4,
-        background:
-          "linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)", // soft gradient background
         minHeight: "100vh",
+        background: "linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)",
       }}
     >
       <Typography variant="h4" align="center" gutterBottom>
         Registered Camps
       </Typography>
 
-      {/* Search Bar */}
+      {/* Search */}
       <Box sx={{ mb: 4, textAlign: "center" }}>
         <TextField
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by Camp Name or Status (paid/unpaid)..."
+          placeholder="Search by Camp Name or Status..."
           variant="outlined"
           size="small"
-          sx={{ width: { xs: "100%", sm: "50%", md: "33%" } }}
+          sx={{ width: { xs: "100%", sm: "50%", md: "40%" } }}
         />
       </Box>
 
@@ -231,9 +194,9 @@ const RegisteredCamps = () => {
           <CircularProgress size={50} />
         </Box>
       ) : (
-        <Grid container justifyContent="flex-end">
-          <Grid item xs={12} md={9}> {/* 75% width */}
-            <Paper elevation={5} sx={{ p: 2 }}>
+        <Grid container justifyContent="center">
+          <Grid item xs={12} md={10}>
+            <Paper elevation={5} sx={{ p: 3 }}>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -294,9 +257,12 @@ const RegisteredCamps = () => {
                 component="div"
                 count={filteredCamps.length}
                 page={page}
-                onPageChange={handleChangePage}
+                onPageChange={(e, newPage) => setPage(newPage)}
                 rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
                 rowsPerPageOptions={[5, 10, 25]}
               />
             </Paper>
@@ -305,7 +271,12 @@ const RegisteredCamps = () => {
       )}
 
       {/* Pay Modal */}
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth="xs">
+      <Dialog
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>Pay for Camp</DialogTitle>
         <DialogContent>
           <Typography mb={1}>

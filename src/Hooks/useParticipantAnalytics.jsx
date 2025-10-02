@@ -16,6 +16,8 @@ const useParticipantAnalytics = () => {
             );
             return res.data;
         },
+        // automatically refetch after 1 second to show updates after join
+        refetchInterval: 1000,
     });
 };
 

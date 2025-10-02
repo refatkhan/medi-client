@@ -68,7 +68,7 @@ const ParticipantProfile = () => {
                 displayName: name,
                 photoURL: photoURL,
             });
-            toast.success("Firebase Profile Updated Successfully");
+            toast.success(" Profile Updated Successfully");
 
             // Update participant profile in backend
             await mutation.mutateAsync({
@@ -119,7 +119,7 @@ const ParticipantProfile = () => {
                             alignItems="center"
                         >
                             <Avatar
-                                src={user?.photoURL || "/default-avatar.png"}
+                                src={user?.photoURL}
                                 sx={{ width: 100, height: 100 }}
                             />
                             <div style={{ textAlign: "center", smTextAlign: "left" }}>
