@@ -19,7 +19,7 @@ const Feedback = () => {
     const { data: feedbacks, isLoading, error } = useQuery({
         queryKey: ["feedbacks"],
         queryFn: async () => {
-            const res = await axios.get("http://localhost:3000/feedbacks");
+            const res = await axios.get("https://medi-server-ten.vercel.app/feedbacks");
             return res.data;
         },
     });

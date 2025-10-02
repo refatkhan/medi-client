@@ -57,7 +57,7 @@ const AuthProvider = ({ children }) => {
                 const userData = { email: currentUser?.email };
                 axios
                     .post(
-                        "http://localhost:3000/jwt",
+                        "https://medi-server-ten.vercel.app/jwt",
                         userData
                     )
                     .then((res) => {

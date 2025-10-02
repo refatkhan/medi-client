@@ -14,6 +14,7 @@ import {
     Box,
 } from "@mui/material";
 import { Logout, Login, AccountCircle, PersonAdd } from "@mui/icons-material";
+import logo from '../../assets/logo.png'
 import useUserRole from "../../Hooks/useUserRole";
 
 const Navbar = () => {
@@ -69,10 +70,18 @@ const Navbar = () => {
                     sx={{ cursor: "pointer" }}
                     className="flex items-center gap-2"
                 >
+                    {/* Logo */}
+                    <img
+                        src={logo} // replace with your logo path
+                        alt="MediCamp Logo"
+                        style={{ width: "40px", height: "40px", objectFit: "contain" }}
+                    />
+
                     <Typography variant="h6" color="white" fontWeight="bold">
                         MediCamp
                     </Typography>
                 </Box>
+
 
                 {/* Nav Links */}
                 <Box className="hidden md:flex items-center gap-6">

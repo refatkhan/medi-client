@@ -32,7 +32,7 @@ const AddCamp = () => {
 
     const { mutate, isPending } = useMutation({
         mutationFn: async (campData) => {
-            const res = await axiosSecure.post("http://localhost:3000/camps", campData);
+            const res = await axiosSecure.post("https://medi-server-ten.vercel.app/camps", campData);
             return res.data;
         },
         onSuccess: () => {

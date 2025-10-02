@@ -207,7 +207,6 @@ const ManageCamps = () => {
                         rowsPerPageOptions={[5, 10, 25]}
                     />
                 </TableContainer>
-
                 {/* Delete Confirmation Dialog */}
                 <Dialog open={deleteDialogOpen} onClose={handleCancelDelete}>
                     <DialogTitle>Are you sure to delete this camp?</DialogTitle>
@@ -222,5 +221,4 @@ const ManageCamps = () => {
         </div>
     );
 };
-
 export default ManageCamps;

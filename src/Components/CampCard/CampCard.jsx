@@ -10,7 +10,7 @@ const CampCard = () => {
     useEffect(() => {
         const fetchCamps = async () => {
             try {
-                const res = await axios.get("http://localhost:3000/camps");
+                const res = await axios.get("https://medi-server-ten.vercel.app/camps");
                 setCamps(res.data);
             } catch (err) {
                 setError(true);
