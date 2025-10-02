@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import {
     Box,
     Typography,
@@ -123,38 +124,46 @@ const PaymentHistory = () => {
         );
 
     return (
-        <Box px={{ xs: 2, md: 6, lg: 8 }} maxWidth="1200px" mx="auto">
-            <Typography
-                variant="h4"
-                fontWeight="600"
-                mb={4}
-                textAlign="center"
-                color="text.primary"
-            >
-                Payment History
-            </Typography>
+        <>
+            <Helmet>
+                <title>Payment History | My Dashboard</title>
+                <meta name="description" content="View all your camp payment transactions and history." />
+            </Helmet>
+            <div>
+                <Box px={{ xs: 2, md: 6, lg: 8 }} maxWidth="1200px" mx="auto">
+                    <Typography
+                        variant="h4"
+                        fontWeight="600"
+                        mb={4}
+                        textAlign="center"
+                        color="text.primary"
+                    >
+                        Payment History
+                    </Typography>
 
-            <Box mb={4} display="flex" justifyContent="center">
-                <TextField
-                    label="Search by Camp Name, Date, or Doctor"
-                    variant="outlined"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    sx={{ width: { xs: "100%", md: "50%", lg: "33%" } }}
-                />
-            </Box>
+                    <Box mb={4} display="flex" justifyContent="center">
+                        <TextField
+                            label="Search by Camp Name, Date, or Doctor"
+                            variant="outlined"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            sx={{ width: { xs: "100%", md: "50%", lg: "33%" } }}
+                        />
+                    </Box>
 
-            <Paper elevation={3}>
-                <DataGrid
-                    rows={filteredPaymentHistory.map((row) => ({ ...row, id: row._id || Math.random() }))}
-                    columns={columns}
-                    autoHeight
-                    pageSize={5}
-                    rowsPerPageOptions={[5, 10, 20]}
-                    disableSelectionOnClick
-                />
-            </Paper>
-        </Box>
+                    <Paper elevation={3}>
+                        <DataGrid
+                            rows={filteredPaymentHistory.map((row) => ({ ...row, id: row._id || Math.random() }))}
+                            columns={columns}
+                            autoHeight
+                            pageSize={5}
+                            rowsPerPageOptions={[5, 10, 20]}
+                            disableSelectionOnClick
+                        />
+                    </Paper>
+                </Box>
+            </div>
+        </>
     );
 };
 

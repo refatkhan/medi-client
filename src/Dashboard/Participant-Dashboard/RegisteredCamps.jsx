@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Box,
   Grid,
@@ -164,195 +165,202 @@ const RegisteredCamps = () => {
   );
 
   return (
-    <Box
-      sx={{
-        ml: { md: "240px" }, // margin for sidebar
-        px: { xs: 2, sm: 4, lg: 6 },
-        py: 4,
-        minHeight: "100vh",
-        background: "linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)",
-      }}
-    >
-      <Typography variant="h4" align="center" gutterBottom>
-        Registered Camps
-      </Typography>
+    <div>
+      <Helmet>
+        <title>Registered Camps | My Dashboard</title>
+        <meta name="description" content="View all camps you have registered for." />
+      </Helmet>
+      <Box
 
-      {/* Search */}
-      <Box sx={{ mb: 4, textAlign: "center" }}>
-        <TextField
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by Camp Name or Status..."
-          variant="outlined"
-          size="small"
-          sx={{ width: { xs: "100%", sm: "50%", md: "40%" } }}
-        />
-      </Box>
+        sx={{
+          ml: { md: "240px" }, // margin for sidebar
+          px: { xs: 2, sm: 4, lg: 6 },
+          py: 4,
+          minHeight: "100vh",
+          background: "linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)",
+        }}
+      >
+        <Typography variant="h4" align="center" gutterBottom>
+          Registered Camps
+        </Typography>
 
-      {isLoading ? (
-        <Box sx={{ textAlign: "center", py: 10 }}>
-          <CircularProgress size={50} />
+        {/* Search */}
+        <Box sx={{ mb: 4, textAlign: "center" }}>
+          <TextField
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by Camp Name or Status..."
+            variant="outlined"
+            size="small"
+            sx={{ width: { xs: "100%", sm: "50%", md: "40%" } }}
+          />
         </Box>
-      ) : (
-        <Grid container justifyContent="center">
-          <Grid item xs={12} md={10}>
-            <Paper elevation={5} sx={{ p: 3 }}>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Camp Name</TableCell>
-                      <TableCell>Fees</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Confirmation</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredCamps
-                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((camp) => (
-                        <TableRow key={camp._id}>
-                          <TableCell>{camp.campName}</TableCell>
-                          <TableCell>৳{camp.fees}</TableCell>
-                          <TableCell>{camp.status}</TableCell>
-                          <TableCell>{camp.confirmationStatus}</TableCell>
-                          <TableCell>
-                            {camp.status === "unpaid" ? (
-                              <Box sx={{ display: "flex", gap: 1 }}>
+
+        {isLoading ? (
+          <Box sx={{ textAlign: "center", py: 10 }}>
+            <CircularProgress size={50} />
+          </Box>
+        ) : (
+          <Grid container justifyContent="center">
+            <Grid item xs={12} md={10}>
+              <Paper elevation={5} sx={{ p: 3 }}>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Camp Name</TableCell>
+                        <TableCell>Fees</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Confirmation</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredCamps
+                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        .map((camp) => (
+                          <TableRow key={camp._id}>
+                            <TableCell>{camp.campName}</TableCell>
+                            <TableCell>৳{camp.fees}</TableCell>
+                            <TableCell>{camp.status}</TableCell>
+                            <TableCell>{camp.confirmationStatus}</TableCell>
+                            <TableCell>
+                              {camp.status === "unpaid" ? (
+                                <Box sx={{ display: "flex", gap: 1 }}>
+                                  <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="small"
+                                    onClick={() => handlePay(camp)}
+                                  >
+                                    Pay
+                                  </Button>
+                                  <Button
+                                    variant="outlined"
+                                    color="error"
+                                    size="small"
+                                    onClick={() => handleCancel(camp)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </Box>
+                              ) : (
                                 <Button
                                   variant="contained"
-                                  color="primary"
                                   size="small"
-                                  onClick={() => handlePay(camp)}
+                                  onClick={() => handleFeedback(camp)}
                                 >
-                                  Pay
+                                  Feedback
                                 </Button>
-                                <Button
-                                  variant="outlined"
-                                  color="error"
-                                  size="small"
-                                  onClick={() => handleCancel(camp)}
-                                >
-                                  Cancel
-                                </Button>
-                              </Box>
-                            ) : (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                onClick={() => handleFeedback(camp)}
-                              >
-                                Feedback
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
 
-              <TablePagination
-                component="div"
-                count={filteredCamps.length}
-                page={page}
-                onPageChange={(e, newPage) => setPage(newPage)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={(e) => {
-                  setRowsPerPage(parseInt(e.target.value, 10));
-                  setPage(0);
-                }}
-                rowsPerPageOptions={[5, 10, 25]}
-              />
-            </Paper>
+                <TablePagination
+                  component="div"
+                  count={filteredCamps.length}
+                  page={page}
+                  onPageChange={(e, newPage) => setPage(newPage)}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
+                  rowsPerPageOptions={[5, 10, 25]}
+                />
+              </Paper>
+            </Grid>
           </Grid>
-        </Grid>
-      )}
+        )}
 
-      {/* Pay Modal */}
-      <Dialog
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>Pay for Camp</DialogTitle>
-        <DialogContent>
-          <Typography mb={1}>
-            <strong>Camp:</strong> {selectedCamp?.campName}
-          </Typography>
-          <Typography mb={2}>
-            <strong>Fees:</strong> ৳{selectedCamp?.fees}
-          </Typography>
-          <Controller
-            name="cardDetails"
-            control={control}
-            render={({ field }) => <CardElement {...field} />}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit(onFinish)}
-            disabled={updatePaymentMutation.isPending}
-          >
-            Pay Now
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {/* Pay Modal */}
+        <Dialog
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          fullWidth
+          maxWidth="xs"
+        >
+          <DialogTitle>Pay for Camp</DialogTitle>
+          <DialogContent>
+            <Typography mb={1}>
+              <strong>Camp:</strong> {selectedCamp?.campName}
+            </Typography>
+            <Typography mb={2}>
+              <strong>Fees:</strong> ৳{selectedCamp?.fees}
+            </Typography>
+            <Controller
+              name="cardDetails"
+              control={control}
+              render={({ field }) => <CardElement {...field} />}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit(onFinish)}
+              disabled={updatePaymentMutation.isPending}
+            >
+              Pay Now
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      {/* Feedback Modal */}
-      <Dialog
-        open={isFeedbackModalOpen}
-        onClose={() => setIsFeedbackModalOpen(false)}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>Submit Feedback</DialogTitle>
-        <DialogContent>
-          <Controller
-            name="rating"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                type="number"
-                label="Rating (1-5)"
-                fullWidth
-                margin="normal"
-                inputProps={{ min: 1, max: 5 }}
-              />
-            )}
-          />
-          <Controller
-            name="comment"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Comment"
-                fullWidth
-                margin="normal"
-                multiline
-                rows={3}
-              />
-            )}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsFeedbackModalOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit(onFeedbackSubmit)}
-            disabled={submitFeedbackMutation.isPending}
-          >
-            Submit Feedback
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        {/* Feedback Modal */}
+        <Dialog
+          open={isFeedbackModalOpen}
+          onClose={() => setIsFeedbackModalOpen(false)}
+          fullWidth
+          maxWidth="xs"
+        >
+          <DialogTitle>Submit Feedback</DialogTitle>
+          <DialogContent>
+            <Controller
+              name="rating"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  type="number"
+                  label="Rating (1-5)"
+                  fullWidth
+                  margin="normal"
+                  inputProps={{ min: 1, max: 5 }}
+                />
+              )}
+            />
+            <Controller
+              name="comment"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Comment"
+                  fullWidth
+                  margin="normal"
+                  multiline
+                  rows={3}
+                />
+              )}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsFeedbackModalOpen(false)}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit(onFeedbackSubmit)}
+              disabled={submitFeedbackMutation.isPending}
+            >
+              Submit Feedback
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </div>
   );
 };
 

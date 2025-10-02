@@ -1,5 +1,6 @@
 import React, { useContext, useState } from "react";
 import {
+    Box,
     Card,
     CardContent,
     Typography,
@@ -20,6 +21,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useAxiosSecure from "../Hooks/useAxiosSecure";
 import { AuthContext } from "../Provider/AuthProvider";
 import Swal from "sweetalert2";
+import { Helmet } from "react-helmet-async";
 
 const ManageRegisteredCamps = () => {
     const { user } = useContext(AuthContext);
@@ -151,7 +153,8 @@ const ManageRegisteredCamps = () => {
                 field: "fees",
                 headerName: "Fees",
                 flex: 1,
-                valueFormatter: ({ value }) => `৳${value}`,
+                valueGetter: (params) => params?.row?.fees ?? 0,  // ensures always a number
+                valueFormatter: (params) => `৳${params?.value ?? 0}`, // safe
             },
             {
                 field: "status",
@@ -159,8 +162,8 @@ const ManageRegisteredCamps = () => {
                 flex: 1,
                 renderCell: (params) => (
                     <Chip
-                        label={params.value}
-                        color={params.value === "paid" ? "success" : "error"}
+                        label={params?.value ?? "N/A"}
+                        color={params?.value === "paid" ? "success" : "error"}
                     />
                 ),
             },
@@ -170,8 +173,8 @@ const ManageRegisteredCamps = () => {
                 flex: 1,
                 renderCell: (params) => (
                     <Chip
-                        label={params.value}
-                        color={params.value === "Confirmed" ? "success" : "warning"}
+                        label={params?.value ?? "N/A"}
+                        color={params?.value === "Confirmed" ? "success" : "warning"}
                     />
                 ),
             },
@@ -180,10 +183,10 @@ const ManageRegisteredCamps = () => {
                 headerName: "Action",
                 flex: 1.5,
                 renderCell: (params) => {
-                    const record = params.row;
+                    const record = params?.row;
                     return (
                         <Stack direction="row" spacing={1}>
-                            {record.confirmationStatus !== "Confirmed" && (
+                            {record?.confirmationStatus !== "Confirmed" && (
                                 <Button
                                     size="small"
                                     variant="contained"
@@ -197,7 +200,7 @@ const ManageRegisteredCamps = () => {
                                 variant="contained"
                                 color="error"
                                 disabled={
-                                    record.status === "paid" && record.confirmationStatus === "Confirmed"
+                                    record?.status === "paid" && record?.confirmationStatus === "Confirmed"
                                 }
                                 onClick={() => handleCancelRegistration(record)}
                             >
@@ -237,50 +240,70 @@ const ManageRegisteredCamps = () => {
     };
 
     return (
-        <div
-            style={{
-                padding: 24,
-                maxWidth: "1250px",
-                margin: "0 auto",
-                borderRadius: 8,
-                background: "linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%)",
-            }}
-        >
-            <Grid container alignItems="center" justifyContent="space-between" mb={3} spacing={2}>
-                <Grid item xs={12} md="auto">
-                    <Typography variant="h5" fontWeight="bold" color="#4a148c">
+        <div>
+            <Helmet>
+                <title>Manage Registered Camps | My Dashboard</title>
+                <meta
+                    name="description"
+                    content="View all your registered camps and manage registrations."
+                />
+            </Helmet>
+
+            <Box p={{ xs: 2, sm: 4, md: 10 }} maxWidth="1200px" mx="auto">
+                {/* Header */}
+                <Box
+                    display="flex"
+                    flexDirection={{ xs: "column", sm: "row" }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "start", sm: "center" }}
+                    mb={4}
+                    gap={2}
+                >
+                    <Typography
+                        variant="h5"
+                        component="h2"
+                        fontWeight={600}
+                        color="primary"
+                    >
                         Manage Registered Camps
                     </Typography>
-                </Grid>
-                <Grid item xs={12} md={4}>
+
+                    {/* Search Bar */}
                     <TextField
-                        fullWidth
-                        type="text"
-                        placeholder="Search by Camp Name, Participant, or Fees..."
+                        variant="outlined"
+                        size="small"
+                        placeholder="Search by Camp, Participant, or Fees..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        sx={{ backgroundColor: "white", borderRadius: 1 }}
+                        sx={{
+                            width: { xs: "100%", sm: "250px", md: "300px" },
+                            backgroundColor: "white",
+                            borderRadius: 1,
+                        }}
                     />
-                </Grid>
-            </Grid>
+                </Box>
 
-            {isMobile ? renderMobileCards() : renderDesktopTable()}
+                {/* Mobile / Desktop content */}
+                {isMobile ? renderMobileCards() : renderDesktopTable()}
 
-            <Dialog open={isModalVisible} onClose={() => setIsModalVisible(false)}>
-                <DialogTitle>Confirm Cancellation</DialogTitle>
-                <DialogContent>
-                    <Typography>
-                        Are you sure you want to cancel this registration?
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setIsModalVisible(false)}>No</Button>
-                    <Button onClick={confirmCancel} color="error">
-                        Yes, Cancel
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                {/* Cancellation Dialog */}
+                <Dialog open={isModalVisible} onClose={() => setIsModalVisible(false)}>
+                    <DialogTitle>Confirm Cancellation</DialogTitle>
+                    <DialogContent>
+                        <Typography>
+                            Are you sure you want to cancel this registration?
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setIsModalVisible(false)}>No</Button>
+                        <Button onClick={confirmCancel} color="error">
+                            Yes, Cancel
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Box>
         </div>
+
     );
 };
 

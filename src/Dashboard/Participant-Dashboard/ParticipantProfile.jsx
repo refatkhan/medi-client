@@ -20,6 +20,7 @@ import Swal from "sweetalert2";
 import { updateProfile } from "firebase/auth";
 import { auth } from "../../firebase/firebase-init"; // Adjust path
 import { toast } from "react-toastify";
+import { Helmet } from "react-helmet-async";
 
 const ParticipantProfile = () => {
     const { user } = useContext(AuthContext);
@@ -110,6 +111,11 @@ const ParticipantProfile = () => {
 
     return (
         <div className="px-4 py-6 sm:px-6 lg:px-8">
+            <Helmet>
+                <title>Participant Profile | My Dashboard</title>
+                <meta name="profile" content="view your profile." />
+            </Helmet>
+
             <div className="max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto">
                 <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
                     <CardContent>

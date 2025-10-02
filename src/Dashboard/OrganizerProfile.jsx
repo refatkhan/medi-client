@@ -18,6 +18,7 @@ import { updateProfile } from "firebase/auth";
 import { auth, db } from "../firebase/firebase-init";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
+import { Helmet } from "react-helmet-async";
 
 const OrganizerProfile = () => {
     const { user } = useContext(AuthContext);
@@ -122,94 +123,104 @@ const OrganizerProfile = () => {
     }
 
     return (
-        <Box px={2} py={4}>
-            <Box maxWidth="700px" mx="auto">
-                <Card elevation={3} sx={{ borderRadius: 3 }}>
-                    <CardContent>
-                        <Box
-                            display="flex"
-                            flexDirection={{ xs: "column", sm: "row" }}
-                            alignItems={{ xs: "center", sm: "flex-start" }}
-                            gap={3}
-                        >
-                            <Avatar
-                                src={profile.photoURL || "/default-avatar.png"}
-                                sx={{ width: 100, height: 100, mx: "auto" }}
-                            />
-                            <Box textAlign={{ xs: "center", sm: "left" }}>
-                                <Typography variant="h6" fontWeight={600}>
-                                    {profile.name || "No Name"}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Contact: {profile.contact || "Not Provided"}
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    size="medium"
-                                    onClick={() => setIsModalOpen(true)}
-                                    sx={{ mt: 2 }}
-                                >
-                                    Update Profile
-                                </Button>
+        <>
+        <Helmet>
+            <title>Profile | My Dashboard</title>
+            <meta
+                name="description"
+                content="View and update your user profile information."
+            />
+        </Helmet>
+            <Box px={2} py={4}>
+                <Box maxWidth="700px" mx="auto">
+                    <Card elevation={3} sx={{ borderRadius: 3 }}>
+                        <CardContent>
+                            <Box
+                                display="flex"
+                                flexDirection={{ xs: "column", sm: "row" }}
+                                alignItems={{ xs: "center", sm: "flex-start" }}
+                                gap={3}
+                            >
+                                <Avatar
+                                    src={profile.photoURL || "/default-avatar.png"}
+                                    sx={{ width: 100, height: 100, mx: "auto" }}
+                                />
+                                <Box textAlign={{ xs: "center", sm: "left" }}>
+                                    <Typography variant="h6" fontWeight={600}>
+                                        {profile.name || "No Name"}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Contact: {profile.contact || "Not Provided"}
+                                    </Typography>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        size="medium"
+                                        onClick={() => setIsModalOpen(true)}
+                                        sx={{ mt: 2 }}
+                                    >
+                                        Update Profile
+                                    </Button>
+                                </Box>
                             </Box>
-                        </Box>
-                    </CardContent>
-                </Card>
-            </Box>
+                        </CardContent>
+                    </Card>
+                </Box>
 
-            {/* Modal */}
-            <Dialog
-                open={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                fullWidth
-                maxWidth="sm"
-            >
-                <DialogTitle>Update Profile</DialogTitle>
-                <DialogContent>
-                    <Box
-                        component="form"
-                        onSubmit={handleFinish}
-                        noValidate
-                        sx={{ mt: 2 }}
-                    >
-                        <TextField
-                            margin="normal"
-                            fullWidth
-                            label="Full Name"
-                            name="name"
-                            defaultValue={profile.name}
-                            required
-                        />
-                        <TextField
-                            margin="normal"
-                            fullWidth
-                            label="Photo URL"
-                            name="photoURL"
-                            defaultValue={profile.photoURL}
-                            required
-                        />
-                        <TextField
-                            margin="normal"
-                            fullWidth
-                            label="Contact"
-                            name="contact"
-                            defaultValue={profile.contact || ""}
-                            required
-                        />
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            fullWidth
-                            sx={{ mt: 3, mb: 2 }}
-                            disabled={isLoading}
+                {/* Modal */}
+                <Dialog
+                    open={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    fullWidth
+                    maxWidth="sm"
+                >
+                    <DialogTitle>Update Profile</DialogTitle>
+                    <DialogContent>
+                        <Box
+                            component="form"
+                            onSubmit={handleFinish}
+                            noValidate
+                            sx={{ mt: 2 }}
                         >
-                            {isLoading ? "Updating..." : "Update"}
-                        </Button>
-                    </Box>
-                </DialogContent>
-            </Dialog>
-        </Box>
+                            <TextField
+                                margin="normal"
+                                fullWidth
+                                label="Full Name"
+                                name="name"
+                                defaultValue={profile.name}
+                                required
+                            />
+                            <TextField
+                                margin="normal"
+                                fullWidth
+                                label="Photo URL"
+                                name="photoURL"
+                                defaultValue={profile.photoURL}
+                                required
+                            />
+                            <TextField
+                                margin="normal"
+                                fullWidth
+                                label="Contact"
+                                name="contact"
+                                defaultValue={profile.contact || ""}
+                                required
+                            />
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                fullWidth
+                                sx={{ mt: 3, mb: 2 }}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? "Updating..." : "Update"}
+                            </Button>
+                        </Box>
+                    </DialogContent>
+                </Dialog>
+            </Box>
+        </>
+
     );
 };
 

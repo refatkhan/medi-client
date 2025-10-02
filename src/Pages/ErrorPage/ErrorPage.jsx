@@ -2,11 +2,16 @@ import React from "react";
 import Lottie from "lottie-react";
 import { useNavigate } from "react-router";
 import animationData from "../../assets/error.json" // download from LottieFiles
+import { Helmet } from "react-helmet-async";
 
 export default function ErrorPage() {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col items-center justify-center min-h-screen  bg-gradient-to-br from-yellow-100 via-yellow-200 to-orange-200 p-4">
+      <Helmet>
+        <title>404 - Page Not Found</title>
+        <meta name="description" content="The page you are looking for does not exist." />
+      </Helmet>
       <div className="w-full max-w-md">
         <Lottie animationData={animationData} loop={true} />
       </div>
