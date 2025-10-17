@@ -2,9 +2,8 @@ import axios from "axios";
 import { useEffect } from "react";
 
 const axiosSecure = axios.create({
-  baseURL: `https://medi-server-ten.vercel.app/`,
+  baseURL: `https://medi-server-ten.vercel.app`,
 });
-
 const useAxiosSecure = () => {
   useEffect(() => {
     // Interceptor to add token to headers

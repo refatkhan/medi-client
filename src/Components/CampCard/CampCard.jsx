@@ -12,6 +12,7 @@ const CampCard = () => {
             try {
                 const res = await axios.get("https://medi-server-ten.vercel.app/camps");
                 setCamps(res.data);
+            // eslint-disable-next-line no-unused-vars
             } catch (err) {
                 setError(true);
             } finally {
@@ -24,11 +25,9 @@ const CampCard = () => {
     if (loading) {
         return <p className="text-center py-10">Loading camps...</p>;
     }
-
     if (error) {
         return <p className="text-center text-red-500 py-10">Failed to load camps.</p>;
     }
-
     const popularCamps = [...camps]
         .sort((a, b) => b.participants - a.participants)
         .slice(0, 6);
