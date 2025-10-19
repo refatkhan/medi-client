@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import useAuth from '../Hooks/useAuth'; // Using your consistent hook
+import useAuth from '../Hooks/useAuth';
 import useAxiosSecure from '../Hooks/useAxiosSecure';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import { CgSpinner } from 'react-icons/cg';
 import { HiOutlineDocumentAdd, HiPencil, HiTrash, HiOutlineSearch, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
@@ -12,24 +11,23 @@ import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 
 const ManageCamps = () => {
-    // --- YOUR LOGIC (with minor adaptations for Swal) ---
-    const { user } = useAuth(); // Use consistent auth hook
+    const { user } = useAuth();
     const axiosSecure = useAxiosSecure();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState("");
-    
-    // Pagination state
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
 
-    // --- FIXED: Fetch only the camps for the logged-in organizer ---
-    const { data: camps = [], isLoading } = useQuery({
-        queryKey: ["organizer-camps", user?.email], // Changed queryKey for specificity
+    // --- Pagination State ---
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5); // Default to 5 items per page
+
+    // Fetch ONLY the camps for the logged-in organizer
+    const { data: camps = [], isLoading, isError } = useQuery({
+        queryKey: ["organizer-camps", user?.email],
         queryFn: async () => {
             const res = await axiosSecure.get(`/organizer-camps?email=${user.email}`);
             return res.data;
         },
-        enabled: !!user?.email, // Only run query if user email is available
+        enabled: !!user?.email,
     });
 
     // Delete mutation
@@ -61,8 +59,8 @@ const ManageCamps = () => {
             }
         });
     };
-    
-    // --- YOUR FILTERING & PAGINATION LOGIC (Unchanged) ---
+
+    // Filtering logic
     const filteredCamps = camps.filter(
         (camp) =>
             camp.campName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -70,23 +68,28 @@ const ManageCamps = () => {
             camp.location?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleChangePage = (newPage) => {
+    // --- Pagination Handlers ---
+    const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
 
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
+        setPage(0); // Reset to the first page when rows per page changes
     };
-    
+
+    // Calculate paginated data
     const paginatedCamps = filteredCamps.slice(
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage
     );
-    // --- END OF YOUR LOGIC ---
 
     if (isLoading) {
         return <div className="flex h-full items-center justify-center"><CgSpinner className="h-12 w-12 animate-spin text-teal-500" /></div>;
+    }
+
+    if (isError) {
+        return <div className="text-center text-red-500 dark:text-red-400">Failed to load your camps.</div>;
     }
 
     return (
@@ -102,13 +105,13 @@ const ManageCamps = () => {
                     </div>
                     <div className="flex w-full md:w-auto items-center gap-4">
                         <div className="relative w-full md:w-64">
-                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                 <HiOutlineSearch className="h-5 w-5 text-gray-400 dark:text-slate-500" />
-                             </div>
-                             <input type="text" placeholder="Search camps..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                                className="block w-full rounded-lg border-none bg-gray-100 py-2.5 pl-10 pr-3 shadow-inner dark:bg-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 sm:text-sm"/>
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <HiOutlineSearch className="h-5 w-5 text-gray-400 dark:text-slate-500" />
+                            </div>
+                            <input type="text" placeholder="Search camps..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                                className="block w-full rounded-lg border-none bg-gray-100 py-2.5 pl-10 pr-3 shadow-inner dark:bg-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 sm:text-sm" />
                         </div>
-                         <Link to="/dashboard/add-camp" className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-teal-700">
+                        <Link to="/dashboard/add-camp" className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-teal-700">
                             <HiOutlineDocumentAdd className="h-5 w-5" />
                             <span className="hidden sm:inline">Add Camp</span>
                         </Link>
@@ -151,7 +154,7 @@ const ManageCamps = () => {
                             ) : (
                                 <tr>
                                     <td colSpan="5" className="px-6 py-16 text-center text-sm text-gray-500 dark:text-slate-400">
-                                        You haven't added any camps yet.
+                                        No camps found.
                                     </td>
                                 </tr>
                             )}
@@ -159,12 +162,12 @@ const ManageCamps = () => {
                     </table>
                 </div>
 
-                {/* Pagination */}
-                {filteredCamps.length > rowsPerPage && (
+                {/* --- Pagination Controls --- */}
+                {filteredCamps.length > 0 && (
                     <div className="flex items-center justify-between border-t border-gray-200 dark:border-slate-700 px-4 py-3 sm:px-6">
-                         <div className="flex flex-1 justify-between sm:hidden">
-                            <button onClick={() => handleChangePage(page - 1)} disabled={page === 0} className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-600">Previous</button>
-                            <button onClick={() => handleChangePage(page + 1)} disabled={page >= Math.ceil(filteredCamps.length / rowsPerPage) - 1} className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-600">Next</button>
+                        <div className="flex flex-1 justify-between sm:hidden">
+                            <button onClick={() => handleChangePage(null, page - 1)} disabled={page === 0} className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-600">Previous</button>
+                            <button onClick={() => handleChangePage(null, page + 1)} disabled={page >= Math.ceil(filteredCamps.length / rowsPerPage) - 1} className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-600">Next</button>
                         </div>
                         <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                             <div>
@@ -173,14 +176,19 @@ const ManageCamps = () => {
                                     <span className="font-medium">{filteredCamps.length}</span> results
                                 </p>
                             </div>
-                            <div>
+                            <div className="flex items-center gap-4">
+                                <select value={rowsPerPage} onChange={handleChangeRowsPerPage} className="rounded-md border-gray-300 bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 focus:ring-teal-500">
+                                    {[5, 10, 25].map(size => (
+                                        <option key={size} value={size}>Show {size}</option>
+                                    ))}
+                                </select>
                                 <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                                    <button onClick={() => handleChangePage(page - 1)} disabled={page === 0} className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 dark:ring-slate-600 dark:text-slate-400 dark:hover:bg-slate-700">
+                                    <button onClick={() => handleChangePage(null, page - 1)} disabled={page === 0} className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 dark:ring-slate-600 dark:text-slate-400 dark:hover:bg-slate-700">
                                         <span className="sr-only">Previous</span>
                                         <HiChevronLeft className="h-5 w-5" aria-hidden="true" />
                                     </button>
-                                    {/* Page numbers could be added here if needed */}
-                                    <button onClick={() => handleChangePage(page + 1)} disabled={page >= Math.ceil(filteredCamps.length / rowsPerPage) - 1} className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 dark:ring-slate-600 dark:text-slate-400 dark:hover:bg-slate-700">
+                                    {/* Page numbers can be generated here for a full pagination UI */}
+                                    <button onClick={() => handleChangePage(null, page + 1)} disabled={page >= Math.ceil(filteredCamps.length / rowsPerPage) - 1} className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 dark:ring-slate-600 dark:text-slate-400 dark:hover:bg-slate-700">
                                         <span className="sr-only">Next</span>
                                         <HiChevronRight className="h-5 w-5" aria-hidden="true" />
                                     </button>
