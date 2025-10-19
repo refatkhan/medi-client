@@ -1,38 +1,67 @@
-import React, { useState, useContext } from "react";
-import { Helmet } from "react-helmet-async";
-import {
-  Box,
-  Grid,
-  Typography,
-  Button,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  TablePagination,
-} from "@mui/material";
-import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useForm, Controller } from "react-hook-form";
-import Swal from "sweetalert2";
+import React, { useState, useContext } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm, Controller } from 'react-hook-form';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import Swal from 'sweetalert2';
+import useAxiosSecure from '../../Hooks/useAxiosSecure';
+import { AuthContext } from '../../Provider/AuthProvider';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CgSpinner } from 'react-icons/cg';
+import { HiOutlineSearch, HiX, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { FaStar } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import dayjs from 'dayjs';
 
-import useAxiosSecure from "../../Hooks/useAxiosSecure";
-import { AuthContext } from "../../Provider/AuthProvider";
+// --- Reusable Status Chip component ---
+const StatusChip = ({ status, type }) => {
+  let colors = '';
+  if (type === 'payment') {
+    colors = status === 'paid'
+      ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+      : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
+  } else { // confirmation
+    colors = status === 'Confirmed'
+      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
+      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300';
+  }
+  return <span className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${colors}`}>{status}</span>;
+};
+
+// --- Interactive Star Rating Component for the Form ---
+const StarRatingInput = ({ value, onChange }) => {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex items-center justify-center space-x-1">
+      {[...Array(5)].map((_, index) => {
+        const ratingValue = index + 1;
+        return (
+          <button
+            type="button"
+            key={ratingValue}
+            className="transform transition-transform duration-200 hover:scale-125 focus:outline-none"
+            onClick={() => onChange(ratingValue)}
+            onMouseEnter={() => setHover(ratingValue)}
+            onMouseLeave={() => setHover(0)}
+          >
+            <FaStar
+              className="h-8 w-8"
+              color={ratingValue <= (hover || value) ? "#ffc107" : "#e4e5e9"}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 
 const RegisteredCamps = () => {
   const { user } = useContext(AuthContext);
   const axiosSecure = useAxiosSecure();
   const stripe = useStripe();
   const elements = useElements();
+  const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
@@ -44,112 +73,120 @@ const RegisteredCamps = () => {
   const { data: registeredCamps = [], refetch, isLoading } = useQuery({
     queryKey: ["registered-camps", user?.email],
     queryFn: async () => {
-      const res = await axiosSecure.get(
-        `/user-registered-camps?email=${user?.email}`
-      );
+      const res = await axiosSecure.get(`/user-registered-camps?email=${user?.email}`);
       return res.data;
     },
     enabled: !!user?.email,
   });
 
-  const { control, handleSubmit } = useForm({
-    defaultValues: { cardDetails: "", rating: "", comment: "" },
+  const { control, handleSubmit: handleFeedbackSubmit, reset: resetFeedbackForm, formState: { errors: feedbackErrors } } = useForm({
+    defaultValues: { rating: 0, comment: "" },
   });
 
   const updatePaymentMutation = useMutation({
-    mutationFn: async (data) =>
-      axiosSecure.patch(`/update-payment-status/${selectedCamp._id}`, data),
+    mutationFn: async (data) => axiosSecure.patch(`/update-payment-status/${selectedCamp._id}`, data),
     onSuccess: () => {
       refetch();
       setIsModalOpen(false);
     },
-    onError: (error) =>
-      Swal.fire("Error", error.message || "Payment failed", "error"),
+    onError: (error) => Swal.fire("Error", error.message || "Payment update failed", "error"),
   });
 
   const cancelRegistrationMutation = useMutation({
-    mutationFn: async (campId) =>
-      axiosSecure.delete(`/cancel-registration/${campId}`),
+    mutationFn: async (campId) => axiosSecure.delete(`/cancel-registration/${campId}`),
     onSuccess: () => {
       refetch();
-      Swal.fire("Cancelled", "Registration cancelled.", "success");
+      Swal.fire("Cancelled", "Your registration has been cancelled.", "success");
     },
-    onError: (error) =>
-      Swal.fire("Error", error.message || "Cancellation failed", "error"),
+    onError: (error) => Swal.fire("Error", error.response?.data?.message || "Cancellation failed", "error"),
   });
 
   const submitFeedbackMutation = useMutation({
-    mutationFn: async (data) =>
-      axiosSecure.post("/submit-feedback", {
-        campId: selectedCamp._id,
-        participantEmail: user?.email,
-        ...data,
-      }),
+    mutationFn: async (data) => axiosSecure.post("/submit-feedback", {
+      campId: selectedCamp.campId,
+      campName: selectedCamp.campName,
+      participantEmail: user?.email,
+      ...data,
+    }),
     onSuccess: () => {
-      Swal.fire("Success", "Feedback submitted!", "success");
+      Swal.fire("Success", "Thank you for your feedback!", "success");
       refetch();
       setIsFeedbackModalOpen(false);
+      resetFeedbackForm();
     },
-    onError: (error) =>
-      Swal.fire("Error", error.message || "Feedback failed", "error"),
+    onError: (error) => Swal.fire("Error", error.message || "Feedback submission failed", "error"),
   });
 
   const handlePay = (camp) => {
     if (camp.status !== "unpaid") {
-      Swal.fire("Error", "This camp is already paid!", "error");
+      Swal.fire("Info", "This camp has already been paid for.", "info");
       return;
     }
     setSelectedCamp(camp);
     setIsModalOpen(true);
   };
 
-  const onFinish = async () => {
+  const onFinishPayment = async () => {
     if (!stripe || !elements) {
-      Swal.fire("Error", "Stripe failed to load", "error");
+      Swal.fire("Initialization Error", "Stripe has not loaded yet. Please wait a moment and try again.", "error");
       return;
     }
 
-    const { data: paymentIntentData } = await axiosSecure.post(
-      "/create-payment-intent",
-      { amount: selectedCamp.fees * 100 }
-    );
+    try {
+      const { data: paymentIntentData } = await axiosSecure.post("/create-payment-intent", { amount: selectedCamp.fees });
+      const clientSecret = paymentIntentData.clientSecret;
+      const card = elements.getElement(CardElement);
 
-    const clientSecret = paymentIntentData.clientSecret;
-    const card = elements.getElement(CardElement);
-    if (!card) return Swal.fire("Error", "Card not found", "error");
+      if (!card) {
+        Swal.fire("Error", "Card element not found. Please refresh the page.", "error");
+        return;
+      }
 
-    const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card,
-        billing_details: {
-          name: user?.displayName || "Unknown",
-          email: user?.email || "Unknown",
+      const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card,
+          billing_details: { name: user?.displayName || "N/A", email: user?.email || "N/A" },
         },
-      },
-    });
-
-    if (error) Swal.fire("Error", error.message, "error");
-    else if (paymentIntent.status === "succeeded") {
-      await updatePaymentMutation.mutate({
-        status: "paid",
-        transactionId: paymentIntent.id,
-        confirmationStatus: "Confirmed",
       });
-      Swal.fire("Success", `Payment successful! Transaction ID: ${paymentIntent.id}`, "success");
+
+      if (error) {
+        Swal.fire("Payment Error", error.message, "error");
+      } else if (paymentIntent.status === "succeeded") {
+        await updatePaymentMutation.mutateAsync({
+          status: "paid",
+          transactionId: paymentIntent.id,
+        });
+        Swal.fire("Payment Success!", `Your payment was successful. Transaction ID: ${paymentIntent.id}`, "success");
+      }
+    } catch (err) {
+      console.error("Payment process error:", err);
+      Swal.fire("Error", "An unexpected error occurred during the payment process.", "error");
     }
   };
 
   const handleCancel = (camp) => {
     if (camp.status === "paid") {
-      Swal.fire("Error", "Cannot cancel a paid camp!", "error");
+      Swal.fire("Info", "Cannot cancel a registration that has already been paid.", "info");
       return;
     }
-    cancelRegistrationMutation.mutate(camp._id);
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "Do you want to cancel your registration for this camp?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3b82f6',
+      confirmButtonText: 'Yes, cancel it!',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        cancelRegistrationMutation.mutate(camp._id);
+      }
+    });
   };
 
   const handleFeedback = (camp) => {
     if (camp.status !== "paid") {
-      Swal.fire("Error", "Payment required to submit feedback!", "error");
+      Swal.fire("Info", "You can only submit feedback for paid and attended camps.", "info");
       return;
     }
     setSelectedCamp(camp);
@@ -159,209 +196,147 @@ const RegisteredCamps = () => {
   const onFeedbackSubmit = (formData) => submitFeedbackMutation.mutate(formData);
 
   const filteredCamps = registeredCamps.filter(
-    (camp) =>
-      camp.campName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      camp.status?.toLowerCase().includes(searchTerm.toLowerCase())
+    (camp) => camp.campName?.toLowerCase().includes(searchTerm.toLowerCase()) || camp.status?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const paginatedCamps = filteredCamps.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  if (isLoading) {
+    return <div className="flex h-full items-center justify-center"><CgSpinner className="h-12 w-12 animate-spin text-teal-500" /></div>;
+  }
+
   return (
-    <div>
-      <Helmet>
-        <title>Registered Camps | My Dashboard</title>
-        <meta name="description" content="View all camps you have registered for." />
-      </Helmet>
-      <Box
+    <>
+      <Helmet><title>Registered Camps | MediCamp Dashboard</title></Helmet>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <div className="rounded-lg bg-white dark:bg-slate-800 shadow-sm">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-200 dark:border-slate-700 p-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100">My Registered Camps</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Manage your payments, cancellations, and feedback.</p>
+            </div>
+            <div className="relative w-full md:w-auto">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><HiOutlineSearch className="h-5 w-5 text-gray-400 dark:text-slate-500" /></div>
+              <input type="text" placeholder="Search by name or status..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full md:w-72 rounded-lg border-none bg-gray-100 py-2.5 pl-10 pr-3 shadow-inner dark:bg-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 sm:text-sm" />
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+              <thead className="bg-gray-50 dark:bg-slate-700/50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400">Camp Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400">Fees</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400">Payment Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400">Confirmation</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                {paginatedCamps.length > 0 ? (
+                  paginatedCamps.map((camp) => (
+                    <tr key={camp._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-200">{camp.campName}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-slate-400">${camp.fees}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm"><StatusChip status={camp.status} type="payment" /></td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm"><StatusChip status={camp.confirmationStatus} type="confirmation" /></td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
+                        <div className="flex items-center gap-2">
+                          {camp.status === "unpaid" ? (
+                            <>
+                              <button onClick={() => handlePay(camp)} className="rounded-md bg-teal-600 px-3 py-1 text-xs text-white shadow-sm transition hover:bg-teal-700">Pay</button>
+                              <button onClick={() => handleCancel(camp)} className="rounded-md bg-red-600 px-3 py-1 text-xs text-white shadow-sm transition hover:bg-red-700">Cancel</button>
+                            </>
+                          ) : (
+                            <button onClick={() => handleFeedback(camp)} className="rounded-md bg-blue-600 px-3 py-1 text-xs text-white shadow-sm transition hover:bg-blue-700">Feedback</button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan="5" className="px-6 py-16 text-center text-sm text-gray-500 dark:text-slate-400">You haven't registered for any camps yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </motion.div>
 
-        sx={{
-          ml: { md: "240px" }, // margin for sidebar
-          px: { xs: 2, sm: 4, lg: 6 },
-          py: 4,
-          minHeight: "100vh",
-          background: "linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)",
-        }}
-      >
-        <Typography variant="h4" align="center" gutterBottom>
-          Registered Camps
-        </Typography>
-
-        {/* Search */}
-        <Box sx={{ mb: 4, textAlign: "center" }}>
-          <TextField
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by Camp Name or Status..."
-            variant="outlined"
-            size="small"
-            sx={{ width: { xs: "100%", sm: "50%", md: "40%" } }}
-          />
-        </Box>
-
-        {isLoading ? (
-          <Box sx={{ textAlign: "center", py: 10 }}>
-            <CircularProgress size={50} />
-          </Box>
-        ) : (
-          <Grid container justifyContent="center">
-            <Grid item xs={12} md={10}>
-              <Paper elevation={5} sx={{ p: 3 }}>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Camp Name</TableCell>
-                        <TableCell>Fees</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Confirmation</TableCell>
-                        <TableCell>Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredCamps
-                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                        .map((camp) => (
-                          <TableRow key={camp._id}>
-                            <TableCell>{camp.campName}</TableCell>
-                            <TableCell>৳{camp.fees}</TableCell>
-                            <TableCell>{camp.status}</TableCell>
-                            <TableCell>{camp.confirmationStatus}</TableCell>
-                            <TableCell>
-                              {camp.status === "unpaid" ? (
-                                <Box sx={{ display: "flex", gap: 1 }}>
-                                  <Button
-                                    variant="contained"
-                                    color="primary"
-                                    size="small"
-                                    onClick={() => handlePay(camp)}
-                                  >
-                                    Pay
-                                  </Button>
-                                  <Button
-                                    variant="outlined"
-                                    color="error"
-                                    size="small"
-                                    onClick={() => handleCancel(camp)}
-                                  >
-                                    Cancel
-                                  </Button>
-                                </Box>
-                              ) : (
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  onClick={() => handleFeedback(camp)}
-                                >
-                                  Feedback
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                <TablePagination
-                  component="div"
-                  count={filteredCamps.length}
-                  page={page}
-                  onPageChange={(e, newPage) => setPage(newPage)}
-                  rowsPerPage={rowsPerPage}
-                  onRowsPerPageChange={(e) => {
-                    setRowsPerPage(parseInt(e.target.value, 10));
-                    setPage(0);
-                  }}
-                  rowsPerPageOptions={[5, 10, 25]}
-                />
-              </Paper>
-            </Grid>
-          </Grid>
+      {/* --- Payment Modal --- */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)}>
+            <motion.div className="relative w-full max-w-md rounded-xl bg-white dark:bg-slate-800 shadow-2xl" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b p-5 dark:border-slate-700"><h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">Complete Payment</h2><button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 focus:outline-none"><HiX className="h-6 w-6" /></button></div>
+              <div className="p-6 space-y-4">
+                <p><span className="font-medium text-gray-700 dark:text-slate-300">Camp:</span> <span className="dark:text-slate-100">{selectedCamp?.campName}</span></p>
+                <p><span className="font-medium text-gray-700 dark:text-slate-300">Amount:</span> <span className="dark:text-slate-100">${selectedCamp?.fees}</span></p>
+                <div className="p-3 rounded-md border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700">
+                  <CardElement options={{ style: { base: { fontSize: '16px', color: document.documentElement.classList.contains('dark') ? '#CBD5E1' : '#424770', '::placeholder': { color: '#aab7c4' } }, invalid: { color: '#9e2146' } } }} />
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-4 border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-lg border bg-white px-5 py-2.5 text-sm font-medium text-gray-700">Cancel</button>
+                <button onClick={onFinishPayment} disabled={updatePaymentMutation.isPending || !stripe} className="flex min-w-[120px] items-center justify-center rounded-lg border bg-teal-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60">{updatePaymentMutation.isPending ? <CgSpinner className="h-5 w-5 animate-spin" /> : "Pay Now"}</button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* Pay Modal */}
-        <Dialog
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          fullWidth
-          maxWidth="xs"
-        >
-          <DialogTitle>Pay for Camp</DialogTitle>
-          <DialogContent>
-            <Typography mb={1}>
-              <strong>Camp:</strong> {selectedCamp?.campName}
-            </Typography>
-            <Typography mb={2}>
-              <strong>Fees:</strong> ৳{selectedCamp?.fees}
-            </Typography>
-            <Controller
-              name="cardDetails"
-              control={control}
-              render={({ field }) => <CardElement {...field} />}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button
-              variant="contained"
-              onClick={handleSubmit(onFinish)}
-              disabled={updatePaymentMutation.isPending}
-            >
-              Pay Now
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Feedback Modal */}
-        <Dialog
-          open={isFeedbackModalOpen}
-          onClose={() => setIsFeedbackModalOpen(false)}
-          fullWidth
-          maxWidth="xs"
-        >
-          <DialogTitle>Submit Feedback</DialogTitle>
-          <DialogContent>
-            <Controller
-              name="rating"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  type="number"
-                  label="Rating (1-5)"
-                  fullWidth
-                  margin="normal"
-                  inputProps={{ min: 1, max: 5 }}
-                />
-              )}
-            />
-            <Controller
-              name="comment"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Comment"
-                  fullWidth
-                  margin="normal"
-                  multiline
-                  rows={3}
-                />
-              )}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setIsFeedbackModalOpen(false)}>Cancel</Button>
-            <Button
-              variant="contained"
-              onClick={handleSubmit(onFeedbackSubmit)}
-              disabled={submitFeedbackMutation.isPending}
-            >
-              Submit Feedback
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </div>
+      {/* --- REDESIGNED Feedback Modal --- */}
+      <AnimatePresence>
+        {isFeedbackModalOpen && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsFeedbackModalOpen(false)}>
+            <motion.div className="relative w-full max-w-lg rounded-xl bg-white dark:bg-slate-800 shadow-2xl" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b p-5 dark:border-slate-700">
+                <h2 className="text-lg font-semibold dark:text-slate-100">Submit Feedback for {selectedCamp?.campName}</h2>
+                <button onClick={() => setIsFeedbackModalOpen(false)} className="text-gray-400 hover:text-gray-600 focus:outline-none"><HiX className="h-6 w-6" /></button>
+              </div>
+              <form onSubmit={handleFeedbackSubmit(onFeedbackSubmit)}>
+                <div className="space-y-6 p-6 text-center">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Your Rating</label>
+                    <Controller
+                      name="rating"
+                      control={control}
+                      rules={{ required: "A rating is required", min: { value: 1, message: "Please select at least one star." } }}
+                      render={({ field }) => (
+                        <StarRatingInput value={field.value} onChange={field.onChange} />
+                      )}
+                    />
+                    {feedbackErrors.rating && <p className="mt-2 text-xs text-red-600">{feedbackErrors.rating.message}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="comment" className="block text-sm font-medium text-left text-gray-700 dark:text-slate-300">Your Comments</label>
+                    <Controller
+                      name="comment"
+                      control={control}
+                      render={({ field }) => (
+                        <textarea
+                          {...field}
+                          id="comment"
+                          rows="4"
+                          placeholder="Tell us about your experience..."
+                          className="mt-1 block w-full rounded-lg border-none bg-gray-100 p-3 shadow-inner transition dark:bg-slate-700 dark:text-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-4 border-t bg-gray-50 px-6 py-4 dark:border-slate-700 dark:bg-slate-800/50">
+                  <button type="button" onClick={() => setIsFeedbackModalOpen(false)} className="rounded-lg border bg-white px-5 py-2.5 text-sm font-medium text-gray-700">Cancel</button>
+                  <button type="submit" disabled={submitFeedbackMutation.isPending} className="flex min-w-[150px] items-center justify-center rounded-lg border bg-teal-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60">{submitFeedbackMutation.isPending ? <CgSpinner className="h-5 w-5 animate-spin" /> : "Submit Feedback"}</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
 export default RegisteredCamps;
+
