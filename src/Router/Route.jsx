@@ -26,6 +26,7 @@ import FeedbackRatings from "../Dashboard/Participant-Dashboard/FeedbackRatings.
 
 // --- Auth & Route Protection ---
 import PrivateRoute from "./PrivateRoute.jsx";
+import OrganizerOverview from "../Dashboard/OrganizerOverview.jsx";
 
 export const router = createBrowserRouter([
     {
@@ -68,6 +69,7 @@ export const router = createBrowserRouter([
             { path: "organizer-profile", element: <OrganizerProfile /> },
             { path: "add-camp", element: <AddCamp /> },
             { path: "manage-camps", element: <ManageCamps /> },
+            { path: "overview", element: <OrganizerOverview /> },
             { path: "update-camp/:campId", element: <UpdateCamp /> },
             { path: "manage-registered-camps", element: <ManageRegisteredCamps /> },
 
