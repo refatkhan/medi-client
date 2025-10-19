@@ -1,29 +1,36 @@
 import React from "react";
 import Lottie from "lottie-react";
-import { useNavigate } from "react-router";
-import animationData from "../../assets/error.json" // download from LottieFiles
+// Corrected import from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
+import animationData from "../../assets/error.json" // Assumes this path is correct
 import { Helmet } from "react-helmet-async";
 
 export default function ErrorPage() {
   const navigate = useNavigate();
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen  bg-gradient-to-br from-yellow-100 via-yellow-200 to-orange-200 p-4">
+    // --- 1. CHANGED BACKGROUND ---
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white p-4">
       <Helmet>
-        <title>404 - Page Not Found</title>
+        <title>404 - Page Not Found | MediCamp</title>
         <meta name="description" content="The page you are looking for does not exist." />
       </Helmet>
+
       <div className="w-full max-w-md">
         <Lottie animationData={animationData} loop={true} />
       </div>
+
       <h1 className="text-3xl font-bold mt-6 text-gray-800">Oops! Page Not Found</h1>
       <p className="text-gray-600 mt-2 text-center">
         The page you are looking for does not exist or has been moved.
       </p>
+
+      {/* --- 2. CHANGED BUTTON COLOR --- */}
       <button
         onClick={() => navigate("/")}
-        className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        className="mt-8 cursor-pointer px-8 py-3 bg-teal-700 text-white rounded-lg font-medium hover:bg-teal-800 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
       >
-        Go Home
+        Go Back Home
       </button>
     </div>
   );

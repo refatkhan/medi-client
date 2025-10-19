@@ -1,47 +1,104 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Added useEffect
 import { useQuery } from "@tanstack/react-query";
-import { Link as RouterLink } from "react-router";
+import { Link as RouterLink } from "react-router-dom";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import { Helmet } from "react-helmet-async";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-    Box,
-    Grid,
-    Typography,
-    TextField,
-    MenuItem,
-    InputAdornment,
-    ToggleButton,
-    ToggleButtonGroup,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import ViewModuleIcon from "@mui/icons-material/ViewModule";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import { Button } from "@mui/material";
+    HiOutlineSearch,
+    HiOutlineViewGrid,
+    HiOutlineViewList,
+    HiOutlineLocationMarker,
+    HiOutlineCalendar,
+    HiOutlineUsers,
+    HiChevronLeft,
+    HiChevronRight
+} from "react-icons/hi";
+import { CgSpinner } from "react-icons/cg";
+
+// --- Configuration ---
+const ITEMS_PER_PAGE = 6;
+
+// --- Reusable Camp Card Component (UNCHANGED) ---
+const CampCardDisplay = ({ camp }) => (
+    <motion.div
+        layout
+        className="flex flex-col bg-white rounded-lg shadow-lg overflow-hidden transition-shadow duration-300 hover:shadow-xl h-full"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.2 }}
+    >
+        <div className="relative h-56 w-full">
+            <img src={camp.image} alt={camp.campName} className="w-full h-full object-cover"/>
+            <div className="absolute top-4 left-4 bg-teal-700 text-white py-1 px-3 rounded-full text-sm font-semibold flex items-center gap-1.5">
+                <HiOutlineUsers className="w-4 h-4" />
+                <span>{camp.participants || 0} Participants</span>
+            </div>
+        </div>
+        <div className="p-5 flex-1 flex flex-col justify-between">
+             {/* Content unchanged... */}
+             <div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-3">{camp.campName}</h3>
+                <div className="space-y-2 text-gray-600 text-sm">
+                    <p className="flex items-center gap-2"><HiOutlineLocationMarker className="w-5 h-5 text-teal-700 flex-shrink-0" /><span>{camp.location}</span></p>
+                    <p className="flex items-center gap-2"><HiOutlineCalendar className="w-5 h-5 text-teal-700 flex-shrink-0" /><span>{new Date(camp.dateTime).toLocaleDateString()}</span></p>
+                    <p className="flex items-center gap-2"><span className="text-teal-700 font-semibold w-5 h-5 flex justify-center items-center flex-shrink-0">$</span><span>{camp.fees}</span></p>
+                    <p className="flex items-center gap-2"><span className="text-teal-700 font-semibold w-5 h-5 text-lg flex justify-center items-center flex-shrink-0">👨‍⚕️</span><span>{camp.doctorName}</span></p>
+                </div>
+            </div>
+            <div className="mt-5">
+                <RouterLink to={`/camp-details/${camp._id}`} className="inline-block px-4 py-2 rounded-lg text-sm font-medium text-white bg-teal-700 hover:bg-teal-800 transition-colors duration-300 shadow hover:shadow-md">
+                    View Details
+                </RouterLink>
+            </div>
+        </div>
+    </motion.div>
+);
+
+// --- Simple Pagination Component (UNCHANGED) ---
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+    const handlePrev = () => { if (currentPage > 1) { onPageChange(currentPage - 1); } };
+    const handleNext = () => { if (currentPage < totalPages) { onPageChange(currentPage + 1); } };
+
+    if (totalPages <= 1) return null;
+
+    return (
+        <div className="mt-10 flex items-center justify-center gap-4">
+            <button onClick={handlePrev} disabled={currentPage === 1} className="flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <HiChevronLeft className="h-4 w-4" /> Previous
+            </button>
+            <span className="text-sm text-gray-600"> Page {currentPage} of {totalPages} </span>
+            <button onClick={handleNext} disabled={currentPage === totalPages} className="flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                Next <HiChevronRight className="h-4 w-4" />
+            </button>
+        </div>
+    );
+};
+
 const AvailableCamps = () => {
+    // --- State Hooks (Unchanged) ---
     const axiosSecure = useAxiosSecure();
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("default");
     const [layoutColumns, setLayoutColumns] = useState(3);
+    const [currentPage, setCurrentPage] = useState(1);
 
-    const {
-        data: camps = [],
-        isLoading,
-        isError,
-    } = useQuery({
-        queryKey: ["available-camps"],
+    // --- Data Fetching (Unchanged) ---
+    const { data: camps = [], isLoading, isError } = useQuery({
+        queryKey: ["available-camps"], // Removed sortBy here if sorting is client-side only
         queryFn: async () => {
             const res = await axiosSecure.get("/available-camps");
             return res.data;
         },
     });
 
-    // Filter and sort camps
-    const filteredCamps = camps
-        .filter(
-            (camp) =>
-                camp.campName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                camp.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                camp.dateTime.toLowerCase().includes(searchTerm.toLowerCase())
+    // --- Filtering and Sorting (Unchanged) ---
+    const filteredAndSortedCamps = camps
+        .filter(camp =>
+            camp.campName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            camp.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            camp.dateTime.toLowerCase().includes(searchTerm.toLowerCase())
         )
         .sort((a, b) => {
             if (sortBy === "mostRegistered") return (b.participants || 0) - (a.participants || 0);
@@ -50,173 +107,122 @@ const AvailableCamps = () => {
             return 0;
         });
 
-    if (isLoading)
-        return (
-            <Typography textAlign="center" py={10}>
-                Loading camps...
-            </Typography>
-        );
-    if (isError)
-        return (
-            <Typography textAlign="center" py={10} color="error">
-                Failed to load camps.
-            </Typography>
-        );
+    // --- Pagination Calculations (Slightly more robust) ---
+    const totalItems = filteredAndSortedCamps.length;
+    // Ensure totalPages is at least 1, prevent NaN if totalItems is 0
+    const totalPages = totalItems > 0 ? Math.ceil(totalItems / ITEMS_PER_PAGE) : 1;
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    // Ensure slice doesn't go negative or beyond array length (though slice handles this)
+    const paginatedCamps = filteredAndSortedCamps.slice(Math.max(0, startIndex), startIndex + ITEMS_PER_PAGE);
+
+    // --- Effect to Reset Page (More robust check) ---
+    useEffect(() => {
+        // Calculate potential new total pages based on current filters
+        const newTotalPages = Math.ceil(filteredAndSortedCamps.length / ITEMS_PER_PAGE) || 1;
+        // If current page is now invalid OR if we are on page 1 already (covers initial load/no results)
+        if (currentPage > newTotalPages || currentPage === 1) {
+            setCurrentPage(1); // Reset to page 1
+        }
+        // Dependency array remains the same - runs when filters change
+    }, [searchTerm, sortBy, camps]); // Depend on camps data too
+
+    // --- Loading and Error States (Unchanged) ---
+    if (isLoading) return (
+        <div className="flex min-h-[60vh] items-center justify-center py-20">
+            <CgSpinner className="h-12 w-12 animate-spin text-teal-700" />
+        </div>
+    );
+    if (isError) return (
+        <div className="flex min-h-[60vh] items-center justify-center py-20">
+            <p className="text-lg text-red-600">Failed to load camps.</p>
+        </div>
+    );
 
     return (
-        <Box py={10} px={2} maxWidth="1200px" mx="auto">
+        <div className="bg-gray-50 py-16 sm:py-20 min-h-screen"> {/* Added min-h-screen */}
             <Helmet>
-                <title>Medicamp | Available Camp</title>
+                <title>Available Camps | MediCamp</title>
+                <meta name="description" content="Browse and search for upcoming medical camps organized by MediCamp."/>
             </Helmet>
 
-            <Typography
-                variant="h4"
-                fontWeight="600"
-                textAlign="center"
-                color="primary"
-                mb={4}
-            >
-                Available Medical Camps
-            </Typography>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-10">
+                    <h2 className="text-3xl font-bold tracking-tight text-gray-800 sm:text-4xl">
+                        Available Medical Camps
+                    </h2>
+                </div>
 
-            {/* Controls: Columns left, Search + Sort right */}
-            <Grid container spacing={2} alignItems="center" mb={4}>
-                {/* Columns Toggle (Left) */}
-                <Grid item xs={12} sm={3}>
-                    <ToggleButtonGroup
-                        value={layoutColumns}
-                        exclusive
-                        onChange={(e, val) => val && setLayoutColumns(val)}
-                        aria-label="layout toggle"
-                        fullWidth
-                    >
-                        <ToggleButton value={2} aria-label="two columns">
-                            <ViewListIcon /> 2 Columns
-                        </ToggleButton>
-                        <ToggleButton value={3} aria-label="three columns">
-                            <ViewModuleIcon /> 3 Columns
-                        </ToggleButton>
-                    </ToggleButtonGroup>
-                </Grid>
-
-                {/* Search + Sort (Right, justify-between) */}
-                <Grid item xs={12} sm={9}>
-                    <Grid container spacing={2} justifyContent="space-between">
-                        {/* Search */}
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                placeholder="Search by name, location, or date..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                variant="outlined"
-                                size="medium"
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <SearchIcon color="primary" />
-                                        </InputAdornment>
-                                    ),
-                                    sx: {
-                                        borderRadius: "50px",
-                                        backgroundColor: "#f1f3f4",
-                                        boxShadow: 1,
-                                    },
-                                }}
-                            />
-                        </Grid>
-
-                        {/* Sort */}
-                        <Grid item xs={12} sm={5} display="flex" justifyContent="flex-end">
-                            <TextField
-                                select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                variant="outlined"
-                                size="medium"
-                                sx={{
-                                    borderRadius: "50px",
-                                    minWidth: "180px",
-                                    "& .MuiOutlinedInput-root": {
-                                        borderRadius: "50px",
-                                        backgroundColor: "#f1f3f4",
-                                        px: 3,
-                                        fontWeight: 500,
-                                    },
-                                }}
-                            >
-                                <MenuItem value="default">Sort By</MenuItem>
-                                <MenuItem value="mostRegistered">Most Registered</MenuItem>
-                                <MenuItem value="campFees">Camp Fees (Low to High)</MenuItem>
-                                <MenuItem value="alphabetical">Alphabetical Order</MenuItem>
-                            </TextField>
-                        </Grid>
-                    </Grid>
-                </Grid>
-            </Grid>
-
-            {/* Camps Grid - Tailwind */}
-            <div
-                className={`grid gap-6 ${layoutColumns === 3
-                    ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                    : "grid-cols-1 sm:grid-cols-2"
-                    }`}
-            >
-                {filteredCamps.map((camp) => (
-                    <div
-                        key={camp._id}
-                        className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 flex flex-col"
-                    >
-                        <img
-                            src={camp.image}
-                            alt={camp.campName}
-                            className="h-52 w-full object-cover rounded-t-xl"
-                        />
-                        <div className="p-4 flex flex-col flex-grow">
-                            <h3 className="text-lg font-bold text-blue-600">{camp.campName}</h3>
-                            <p className="text-sm text-gray-500">📍 {camp.location}</p>
-                            <p className="text-sm text-gray-500">💰 ${camp.fees}</p>
-                            <p className="text-sm text-gray-500">🗓️ {camp.dateTime}</p>
-                            <p className="text-sm text-gray-500">👨‍⚕️ {camp.doctorName}</p>
-                            <p className="text-sm text-green-600 font-medium">
-                                👥 {camp.participants || 0} Participants
-                            </p>
-                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                                {camp.description}
-                            </p>
-
-                            <div className="mt-auto pt-4">
-                                <RouterLink to={`/camp-details/${camp._id}`}>
-                                    <Button
-                                        variant="contained"
-                                        size="small"
-                                        sx={{
-                                            background: "linear-gradient(to right, #3b82f6, #6366f1)", // blue-500 → indigo-500
-                                            textTransform: "none",
-                                            borderRadius: "8px",
-                                            px: 2.5,
-                                            py: 1,
-                                            fontSize: "0.85rem",
-                                            "&:hover": {
-                                                background: "linear-gradient(to right, #2563eb, #4f46e5)", // darker on hover
-                                            },
-                                        }}
-                                    >
-                                        View Details
-                                    </Button>
-                                </RouterLink>
-                            </div>
+                {/* --- Controls Section (Unchanged Layout) --- */}
+                <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-12 md:items-center">
+                     <div className="relative md:col-span-12 lg:col-span-6">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <HiOutlineSearch className="h-5 w-5 text-gray-400" aria-hidden="true" />
                         </div>
+                        <input type="text" placeholder="Search by name, location, or date..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-3 shadow-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500 sm:text-sm"/>
                     </div>
-                ))}
-            </div>
+                     <div className="md:col-span-6 lg:col-span-3">
+                        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="block w-full rounded-lg border-gray-300 bg-white py-3 pl-3 pr-8 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:text-sm">
+                            <option value="default">Sort By</option>
+                            <option value="mostRegistered">Most Registered</option>
+                            <option value="campFees">Camp Fees (Low to High)</option>
+                            <option value="alphabetical">Alphabetical Order</option>
+                        </select>
+                    </div>
+                     <div className="flex justify-start md:justify-end space-x-2 md:col-span-6 lg:col-span-3">
+                        <button onClick={() => setLayoutColumns(2)} className={`rounded-lg p-2 transition-colors ${ layoutColumns === 2 ? 'bg-teal-700 text-white' : 'bg-white text-gray-500 hover:bg-gray-100 shadow-sm border border-gray-300'}`} aria-label="Set 2 columns"><HiOutlineViewList className="h-6 w-6" /></button>
+                        <button onClick={() => setLayoutColumns(3)} className={`rounded-lg p-2 transition-colors ${ layoutColumns === 3 ? 'bg-teal-700 text-white' : 'bg-white text-gray-500 hover:bg-gray-100 shadow-sm border border-gray-300'}`} aria-label="Set 3 columns"><HiOutlineViewGrid className="h-6 w-6" /></button>
+                    </div>
+                </div>
 
-            {filteredCamps.length === 0 && (
-                <Typography textAlign="center" color="text.secondary" mt={4}>
-                    No camps found.
-                </Typography>
-            )}
-        </Box>
+                {/* --- Camps Grid --- */}
+                {/* --- UPDATED: Removed mode="wait" --- */}
+                <AnimatePresence>
+                    <motion.div
+                        key={currentPage} // Animate when page changes
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className={`grid gap-8 ${
+                            layoutColumns === 3
+                                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                                : "grid-cols-1 md:grid-cols-2"
+                        }`}
+                    >
+                        {/* Render cards based on pagination */}
+                        {paginatedCamps.length > 0 ? (
+                             paginatedCamps.map((camp) => (
+                                <CampCardDisplay key={camp._id} camp={camp} />
+                            ))
+                        ) : (
+                            // Show message inside the grid area if no results on this page *after* filtering
+                            // The main "No camps found" message handles the case of zero results overall
+                             !isLoading && filteredAndSortedCamps.length > 0 && currentPage > 1 && (
+                                 <p className="text-gray-500 md:col-span-2 lg:col-span-3 text-center py-10">No more camps on this page.</p>
+                             )
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+
+                {/* --- No Camps Found Overall Message --- */}
+                {!isLoading && filteredAndSortedCamps.length === 0 && (
+                    <div className="mt-10 text-center text-gray-500 py-10">
+                        No camps found matching your search criteria.
+                    </div>
+                )}
+
+                {/* --- Pagination Controls --- */}
+                {/* Only show pagination if there are items to paginate */}
+                {!isLoading && filteredAndSortedCamps.length > 0 && (
+                     <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />
+                )}
+
+            </div>
+        </div>
     );
 };
 

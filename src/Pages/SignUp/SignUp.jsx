@@ -1,25 +1,10 @@
 import React, { useContext, useState, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-
-import {
-    Box,
-    Button,
-    Container,
-    Divider,
-    FormControl,
-    IconButton,
-    InputAdornment,
-    OutlinedInput,
-    Stack,
-    Typography,
-    TextField,
-    InputLabel,
-    Avatar,
-} from "@mui/material";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom"; // Use react-router-dom
 import { FcGoogle } from "react-icons/fc";
-import { FaEye, FaEyeSlash, FaStethoscope, FaUpload } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { HiOutlineUserAdd, HiOutlineCloudUpload } from "react-icons/hi"; // New icons
+import { CgSpinner } from "react-icons/cg";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../Provider/AuthProvider";
 import { imageUpload } from "../../api/utils";
@@ -28,9 +13,12 @@ import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import { useForm, Controller } from "react-hook-form";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
-import animationData from "../../assets/Welcome.json";
+import animationData from "../../assets/Welcome.json"; // Your Lottie animation
+
+// --- MUI Imports are removed ---
 
 const SignUp = () => {
+    // --- ALL YOUR LOGIC (UNCHANGED) ---
     const { createUser, updateUserProfile, signInWithGoogle, loading, setUser } =
         useContext(AuthContext);
     const navigate = useNavigate();
@@ -42,7 +30,7 @@ const SignUp = () => {
 
     const [showPass, setShowPass] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
-    const selectedFileName = watch("image")?.[0]?.name || "Upload Profile Image";
+    const selectedFile = watch("image")?.[0]; // Get the actual file object
 
     const addUserToDB = useMutation({
         mutationFn: async (userInfo) => {
@@ -58,7 +46,7 @@ const SignUp = () => {
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
-        setValue("image", e.target.files);
+        setValue("image", e.target.files); // React Hook Form needs the FileList
         if (file) {
             const reader = new FileReader();
             reader.onload = () => setPreviewImage(reader.result);
@@ -78,7 +66,7 @@ const SignUp = () => {
             const createdUser = result.user;
 
             await updateUserProfile(name, imageUrl);
-            setUser({ ...createdUser, displayName: name, photoURL: imageUrl });
+            setUser({ ...createdUser, displayName: name, photoURL: imageUrl }); // Update context user
 
             const userInfo = {
                 name,
@@ -91,7 +79,7 @@ const SignUp = () => {
             await addUserToDB.mutateAsync(userInfo);
 
             toast.success("Registration successful! Welcome to MediCamp.");
-            navigate("/");
+            navigate("/"); // Navigate to home after successful registration
         } catch (err) {
             console.error("Signup Error:", err);
             toast.error(err?.message || "Signup failed. Please try again.");
@@ -117,266 +105,211 @@ const SignUp = () => {
             toast.error(err?.message || "Google Signup failed. Please try again.");
         }
     };
+    // --- END OF YOUR LOGIC ---
 
     return (
         <div>
             <Helmet>
-                <title>Sign Up | Medical Camp</title>
+                <title>Sign Up | MediCamp</title>
                 <meta name="description" content="Create a new account to access your dashboard and register for camps." />
             </Helmet>
 
-            <Box
-                sx={{
-                    minHeight: "100vh",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    py: 6,
-                    background: "linear-gradient(270deg, #a1c4fd, #c2e9fb, #89f7fe, #c3ecb2)",
-                    backgroundSize: "800% 800%",
-                    animation: "gradientBG 15s ease infinite",
-                }}
-            >
-                <Container
-                    maxWidth="lg"
-                    sx={{
-                        display: "flex",
-                        flexDirection: { xs: "column", md: "row" },
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: { xs: 4, md: 8 },
-                    }}
-                >
-                    {/* Lottie Animation */}
+            {/* --- Fullscreen Container (NEW DESIGN - matches SignIn) --- */}
+            <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 py-12">
+
+                {/* --- Main Content Area (Lottie + Form) --- */}
+                <div className="flex w-full max-w-6xl flex-col items-center justify-center gap-12 md:flex-row">
+
+                    {/* --- Lottie Animation (Left Side on Desktop) --- */}
                     <motion.div
-                        initial={{ opacity: 0, y: -30 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        className="hidden md:block md:w-1/2 lg:w-2/5"
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8 }}
-                        style={{ width: "100%", maxWidth: 400, order: { xs: 0, md: 1 } }}
                     >
-                        <Box display="flex" justifyContent="center" alignItems="center">
-                            <Lottie
-                                animationData={animationData}
-                                loop={true}
-                                style={{
-                                    width: "100%",
-                                    maxWidth: 350,
-                                    height: "auto",
-                                }}
-                            />
-                        </Box>
+                        <Lottie
+                            animationData={animationData}
+                            loop={true}
+                            style={{ width: "100%", height: "auto" }}
+                        />
                     </motion.div>
 
-                    {/* Form */}
+                    {/* --- Form Card (Right Side on Desktop) --- */}
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        className="w-full max-w-lg"
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <Box
-                            sx={{
-                                flex: 1,
-                                p: { xs: 3, md: 4 },
-                                borderRadius: 3,
-                                boxShadow: 6,
-                                bgcolor: "rgba(255,255,255,0.9)",
-                                backdropFilter: "blur(10px)",
-                                width: { xs: "100%", md: 480 },
-                                mt: { xs: 4, md: 0 },
-                            }}
-                        >
-                            <Box textAlign="center" mb={3}>
-                                <Typography variant="h4" color="primary" fontWeight="bold" gutterBottom>
-                                    MediCamp Sign Up
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Join our medical community
-                                </Typography>
-                            </Box>
+                        <div className="rounded-xl bg-white p-8 shadow-xl">
+                            {/* Header */}
+                            <div className="text-center">
+                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+                                    <HiOutlineUserAdd className="h-6 w-6" />
+                                </div>
+                                <h2 className="mt-4 text-2xl font-bold tracking-tight text-gray-800">
+                                    Create your account
+                                </h2>
+                                <p className="mt-2 text-sm text-gray-600">
+                                    Join the MediCamp community today.
+                                </p>
+                            </div>
 
-                            <form onSubmit={handleSubmit(onSubmit)}>
-                                <Stack spacing={3}>
-                                    {/* Full Name */}
+                            {/* Form */}
+                            <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+                                {/* Full Name */}
+                                <div>
+                                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
                                     <Controller
                                         name="name"
                                         control={control}
                                         defaultValue=""
                                         rules={{ required: "Full Name is required" }}
                                         render={({ field }) => (
-                                            <TextField
+                                            <input
                                                 {...field}
-                                                label="Full Name"
-                                                error={!!errors.name}
-                                                helperText={errors.name?.message}
-                                                fullWidth
+                                                id="name"
+                                                type="text"
+                                                required
+                                                className={`mt-1 block w-full rounded-lg border-none bg-gray-100 p-3 shadow-inner transition duration-200 ease-in-out focus:bg-white focus:outline-none focus:ring-2 ${errors.name ? 'ring-red-500' : 'focus:ring-teal-500'}`}
                                             />
                                         )}
                                     />
+                                    {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
+                                </div>
 
-                                    {/* Profile Image Upload */}
-                                    <Box>
-                                        <input
-                                            type="file"
-                                            name="image"
-                                            accept="image/*"
-                                            ref={fileInputRef}
-                                            style={{ display: "none" }}
-                                            onChange={handleImageChange}
-                                        />
-                                        <Button
-                                            variant="outlined"
-                                            fullWidth
-                                            onClick={() => fileInputRef.current.click()}
-                                            startIcon={<CloudUploadIcon />}
-                                            sx={{
-                                                justifyContent: "space-between",
-                                                textTransform: "none",
-                                                borderRadius: 2,
-                                                borderColor: "#1976d2",
-                                                color: "#1976d2",
-                                                fontWeight: 500,
-                                                background: "transparent",
-                                                "&:hover": {
-                                                    background: "linear-gradient(90deg, #1976d2, #42a5f5)",
-                                                    color: "#fff",
-                                                    boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
-                                                },
-                                                transition: "all 0.3s ease",
-                                            }}
-                                        >
-                                            {selectedFileName}
-                                        </Button>
-                                        {previewImage && (
-                                            <Box display="flex" justifyContent="center" mt={2}>
-                                                <Avatar src={previewImage} alt="Preview" sx={{ width: 80, height: 80 }} />
-                                            </Box>
-                                        )}
-                                    </Box>
+                                {/* Profile Image Upload (NEW DESIGN) */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Profile Image</label>
+                                    <input
+                                        type="file"
+                                        name="image"
+                                        accept="image/*"
+                                        ref={fileInputRef}
+                                        style={{ display: "none" }}
+                                        onChange={handleImageChange}
+                                    />
+                                    <button
+                                        type="button" // Important: prevents form submission
+                                        onClick={() => fileInputRef.current.click()}
+                                        className="mt-1 flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                                    >
+                                        <span className="truncate pr-2">{selectedFile ? selectedFile.name : "Choose a profile image"}</span>
+                                        <HiOutlineCloudUpload className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                                    </button>
+                                    {/* --- Image Preview --- */}
+                                    {previewImage && (
+                                        <div className="mt-3 flex justify-center">
+                                            <img src={previewImage} alt="Preview" className="h-20 w-20 rounded-full object-cover" />
+                                        </div>
+                                    )}
+                                    {/* Simple validation message */}
+                                    {errors.image && <p className="mt-1 text-xs text-red-600">{errors.image.message}</p>}
+                                </div>
 
-                                    {/* Email */}
+
+                                {/* Email */}
+                                <div>
+                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
                                     <Controller
                                         name="email"
                                         control={control}
                                         defaultValue=""
-                                        rules={{
-                                            required: "Email is required",
-                                            pattern: { value: /\S+@\S+\.\S+/, message: "Enter a valid email" },
-                                        }}
+                                        rules={{ required: "Email is required", pattern: { value: /\S+@\S+\.\S+/, message: "Enter a valid email" } }}
                                         render={({ field }) => (
-                                            <TextField
+                                            <input
                                                 {...field}
-                                                label="Email"
+                                                id="email"
                                                 type="email"
-                                                error={!!errors.email}
-                                                helperText={errors.email?.message}
-                                                fullWidth
+                                                autoComplete="email"
+                                                required
+                                                className={`mt-1 block w-full rounded-lg border-none bg-gray-100 p-3 shadow-inner transition duration-200 ease-in-out focus:bg-white focus:outline-none focus:ring-2 ${errors.email ? 'ring-red-500' : 'focus:ring-teal-500'}`}
                                             />
                                         )}
                                     />
+                                    {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
+                                </div>
 
-                                    {/* Password */}
-                                    <Controller
-                                        name="password"
-                                        control={control}
-                                        defaultValue=""
-                                        rules={{
-                                            required: "Password is required",
-                                            minLength: { value: 6, message: "Min 6 characters" },
-                                        }}
-                                        render={({ field }) => (
-                                            <FormControl variant="outlined" fullWidth>
-                                                <InputLabel htmlFor="password">Password</InputLabel>
-                                                <OutlinedInput
+                                {/* Password */}
+                                <div>
+                                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                                    <div className="relative mt-1">
+                                        <Controller
+                                            name="password"
+                                            control={control}
+                                            defaultValue=""
+                                            rules={{ required: "Password is required", minLength: { value: 6, message: "Password must be at least 6 characters" } }}
+                                            render={({ field }) => (
+                                                <input
                                                     {...field}
                                                     id="password"
                                                     type={showPass ? "text" : "password"}
-                                                    endAdornment={
-                                                        <InputAdornment position="end">
-                                                            <IconButton onClick={() => setShowPass(!showPass)} edge="end">
-                                                                {showPass ? <FaEyeSlash /> : <FaEye />}
-                                                            </IconButton>
-                                                        </InputAdornment>
-                                                    }
-                                                    label="Password"
+                                                    required
+                                                    className={`block w-full rounded-lg border-none bg-gray-100 p-3 shadow-inner transition duration-200 ease-in-out focus:bg-white focus:outline-none focus:ring-2 ${errors.password ? 'ring-red-500' : 'focus:ring-teal-500'}`}
                                                 />
-                                                {errors.password && (
-                                                    <Typography color="error" variant="caption">
-                                                        {errors.password.message}
-                                                    </Typography>
-                                                )}
-                                            </FormControl>
-                                        )}
-                                    />
+                                            )}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPass(!showPass)}
+                                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                                            aria-label={showPass ? "Hide password" : "Show password"}
+                                        >
+                                            {showPass ? <FaEyeSlash className="h-5 w-5" /> : <FaEye className="h-5 w-5" />}
+                                        </button>
+                                    </div>
+                                    {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
+                                </div>
 
-                                    <Button
+                                {/* Submit Button */}
+                                <div>
+                                    <button
                                         type="submit"
-                                        variant="contained"
-                                        fullWidth
-                                        sx={{
-                                            background: "linear-gradient(90deg, #1976d2, #42a5f5)",
-                                            color: "#fff",
-                                            fontWeight: 600,
-                                            py: 1.5,
-                                            borderRadius: 2,
-                                            "&:hover": {
-                                                background: "linear-gradient(90deg, #42a5f5, #1976d2)",
-                                            },
-                                            transition: "all 0.3s ease",
-                                        }}
-                                        startIcon={loading && <FaStethoscope className="animate-pulse" />}
+                                        disabled={loading || addUserToDB.isPending} // Use mutation pending state
+                                        className="flex w-full justify-center rounded-lg border border-transparent bg-teal-700 px-6 py-3 text-base font-medium text-white shadow-sm transition-all duration-200 hover:bg-teal-800 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60"
                                     >
-                                        {loading ? "Registering..." : "Register Now"}
-                                    </Button>
-                                </Stack>
+                                        {(loading || addUserToDB.isPending) ? (
+                                            <CgSpinner className="h-5 w-5 animate-spin" />
+                                        ) : (
+                                            "Register Now"
+                                        )}
+                                    </button>
+                                </div>
                             </form>
 
                             {/* Divider */}
-                            <Box my={3} display="flex" alignItems="center">
-                                <Divider sx={{ flexGrow: 1 }} />
-                                <Typography sx={{ mx: 2 }} variant="body2" color="text.secondary">
-                                    or continue with
-                                </Typography>
-                                <Divider sx={{ flexGrow: 1 }} />
-                            </Box>
+                            <div className="relative my-6">
+                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                    <div className="w-full border-t border-gray-300" />
+                                </div>
+                                <div className="relative flex justify-center text-sm">
+                                    <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                                </div>
+                            </div>
 
-                            {/* Google Signup */}
-                            <Button
-                                variant="contained"
-                                fullWidth
-                                onClick={handleGoogleSignIn}
-                                startIcon={<FcGoogle />}
-                                sx={{
-                                    mt: 2,
-                                    background: "linear-gradient(90deg, #f44336, #ff7961)",
-                                    color: "#fff",
-                                    fontWeight: 600,
-                                    py: 1.5,
-                                    borderRadius: 2,
-                                    "&:hover": {
-                                        background: "linear-gradient(90deg, #ff7961, #f44336)",
-                                    },
-                                    transition: "all 0.3s ease",
-                                }}
-                            >
-                                Continue with Google
-                            </Button>
-
-                            {/* Login link */}
-                            <Box display="flex" justifyContent="center" alignItems="center" mt={3} gap={1}>
-                                <Typography variant="body2" color="text.secondary">
-                                    Already have an account?
-                                </Typography>
-                                <Link
-                                    to="/sign-in"
-                                    style={{ color: "#1976d2", fontWeight: 600, textDecoration: "none" }}
+                            {/* Google Button */}
+                            <div>
+                                <button
+                                    onClick={handleGoogleSignIn}
+                                    disabled={loading || addUserToDB.isPending}
+                                    className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60"
                                 >
-                                    Login
+                                    <FcGoogle className="h-5 w-5" />
+                                    Continue with Google
+                                </button>
+                            </div>
+
+                            {/* Link to Sign In */}
+                            <p className="mt-6 text-center text-sm text-gray-600">
+                                Already have an account?{" "}
+                                <Link to="/sign-in" className="font-medium text-teal-700 hover:text-teal-600 hover:underline">
+                                    Sign in here
                                 </Link>
-                            </Box>
-                        </Box>
+                            </p>
+                        </div>
                     </motion.div>
-                </Container>
-            </Box>
+                </div>
+            </div>
         </div>
     );
 };

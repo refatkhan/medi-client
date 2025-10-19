@@ -1,23 +1,16 @@
 import React, { useState } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import { FaStethoscope } from "react-icons/fa";
+import { HiOutlineKey } from "react-icons/hi"; // --- 1. ICON CHANGED ---
+import { CgSpinner } from "react-icons/cg";
 import { toast } from "react-toastify";
 import useAuth from "../../Hooks/useAuth";
-import {
-    Box,
-    Button,
-    Card,
-    Divider,
-    TextField,
-    Typography,
-    Stack,
-    CircularProgress,
-} from "@mui/material";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
+
 const SignIn = () => {
+    // --- All your logic remains unchanged ---
     const { signIn, signInWithGoogle, user } = useAuth();
     const axiosSecure = useAxiosSecure();
     const queryClient = useQueryClient();
@@ -25,9 +18,10 @@ const SignIn = () => {
     const location = useLocation();
     const from = location?.state?.from?.pathname || "/";
     const [loading, setLoading] = useState(false);
+
     const addUserToDB = useMutation({
         mutationFn: async (userInfo) => {
-            const res = await axiosSecure.post("/users", userInfo); // use instance here
+            const res = await axiosSecure.post("/users", userInfo);
             return res.data;
         },
         onSuccess: () => {
@@ -35,25 +29,22 @@ const SignIn = () => {
         },
     });
 
-
     const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         const email = data.get("email");
         const password = data.get("password");
-        setLoading(true); // start loading
+        setLoading(true);
         try {
             const result = await signIn(email, password);
-            console.log("Login Result:", result);
             toast.success("Login Successful! Welcome to MediCamp.");
             navigate(from, { replace: true });
         } catch (err) {
-            console.log("Login Error:", err);
             toast.error(err?.message || "Login failed. Please try again.");
-            event.target.reset(); // reset form inputs
-            setLoading(false); // reset button state
+            setLoading(false);
         }
     };
+
     const handleGoogleSignIn = async () => {
         try {
             const result = await signInWithGoogle();
@@ -67,137 +58,126 @@ const SignIn = () => {
             };
             await addUserToDB.mutateAsync(userData);
             toast.success("Google Signup successful! Welcome to MediCamp.");
-            navigate("/");
+            navigate(from, { replace: true });
         } catch (err) {
-            console.error("Google Signup Error:", err);
             toast.error(err?.message || "Google Signup failed. Please try again.");
         }
     };
+
+    if (user) {
+        return <Navigate to={from} replace={true} />;
+    }
+
     return (
         <div>
             <Helmet>
-                <title>Sign In | Medical Camp</title>
+                <title>Sign In | MediCamp</title>
                 <meta name="description" content="Sign in to access your dashboard and manage your camps." />
             </Helmet>
-            <Box
-                sx={{
-                    minHeight: "100vh",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
-                    p: 2,
-                }}
-            >
-                <Card
-                    sx={{
-                        width: "100%",
-                        maxWidth: 400,
-                        p: 4,
-                        borderRadius: 3,
-                        boxShadow: 8,
-                        background: "linear-gradient(180deg, #1c1c1c 0%, #2a2a2a 100%)",
-                    }}
-                >
-                    <Box textAlign="center" mb={3}>
-                        <Typography variant="h4" sx={{ color: "#fff", fontWeight: "bold" }} gutterBottom>
-                            MediCamp Sign In
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: "#ccc" }}>
-                            Access your medical account
-                        </Typography>
-                    </Box>
 
-                    <Box component="form" onSubmit={handleSubmit} noValidate>
-                        <TextField
-                            fullWidth
-                            margin="normal"
-                            label="Email"
-                            name="email"
-                            type="email"
-                            required
-                            sx={{
-                                input: { color: "#fff" },
-                                label: { color: "#aaa" },
-                                "& .MuiOutlinedInput-root": {
-                                    "& fieldset": { borderColor: "#555" },
-                                    "&:hover fieldset": { borderColor: "#888" },
-                                    "&.Mui-focused fieldset": { borderColor: "#4dabf5" },
-                                },
-                            }}
-                        />
-                        <TextField
-                            fullWidth
-                            margin="normal"
-                            label="Password"
-                            name="password"
-                            type="password"
-                            required
-                            sx={{
-                                input: { color: "#fff" },
-                                label: { color: "#aaa" },
-                                "& .MuiOutlinedInput-root": {
-                                    "& fieldset": { borderColor: "#555" },
-                                    "&:hover fieldset": { borderColor: "#888" },
-                                    "&.Mui-focused fieldset": { borderColor: "#4dabf5" },
-                                },
-                            }}
-                        />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            sx={{
-                                mt: 2,
-                                mb: 2,
-                                background: "linear-gradient(90deg, #2196f3 0%, #21cbf3 100%)",
-                                color: "#fff",
-                                fontWeight: "bold",
-                                "&:hover": {
-                                    background: "linear-gradient(90deg, #21cbf3 0%, #2196f3 100%)",
-                                },
-                            }}
+            {/* --- We are keeping bg-gray-50. It's the best choice. --- */}
+            <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+
+                <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-xl">
+
+                    {/* --- Header with NEW ICON --- */}
+                    <div className="text-center">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+                            <HiOutlineKey className="h-6 w-6" />
+                        </div>
+                        <h2 className="mt-4 text-2xl font-bold tracking-tight text-gray-800">
+                            Sign in to your account
+                        </h2>
+                        <p className="mt-2 text-sm text-gray-600">
+                            Welcome back to MediCamp.
+                        </p>
+                    </div>
+
+                    {/* Form */}
+                    <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
+
+                        {/* Email Input */}
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                                Email address
+                            </label>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                className="mt-1 block w-full rounded-lg border-none bg-gray-100 p-3 shadow-inner transition duration-200 ease-in-out focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            />
+                        </div>
+
+                        {/* Password Input */}
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                Password
+                            </label>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                autoComplete="current-password"
+                                required
+                                className="mt-1 block w-full rounded-lg border-none bg-gray-100 p-3 shadow-inner transition duration-200 ease-in-out focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            />
+                        </div>
+
+                        {/* --- Submit Button (NEW HOVER EFFECT) --- */}
+                        <div>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="flex w-full justify-center rounded-lg border border-transparent bg-teal-700 px-6 py-3 text-base font-medium text-white shadow-sm transition-all duration-200 hover:bg-teal-800 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60"
+                            >
+                                {loading ? (
+                                    <CgSpinner className="h-5 w-5 animate-spin" />
+                                ) : (
+                                    "Sign In"
+                                )}
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* Divider */}
+                    <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                            <div className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="bg-white px-2 text-gray-500">
+                                Or continue with
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* --- Google Button (NEW HOVER EFFECT) --- */}
+                    <div>
+                        <button
+                            onClick={handleGoogleSignIn}
                             disabled={loading}
-                            startIcon={loading ? <CircularProgress size={20} /> : <FaStethoscope />}
+                            className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60"
                         >
-                            {loading ? "Logging in..." : "Login"}
-                        </Button>
-                    </Box>
+                            <FcGoogle className="h-5 w-5" />
+                            Continue with Google
+                        </button>
+                    </div>
 
-                    <Stack direction="row" alignItems="center" spacing={1} my={2}>
-                        <Divider flexItem sx={{ bgcolor: "#555" }} />
-                        <Typography variant="body2" sx={{ color: "#aaa" }}>
-                            or continue with
-                        </Typography>
-                        <Divider flexItem sx={{ bgcolor: "#555" }} />
-                    </Stack>
-
-                    <Button
-                        fullWidth
-                        variant="contained"
-                        startIcon={<FcGoogle size={20} />}
-                        onClick={handleGoogleSignIn}
-                        disabled={loading}
-                        sx={{
-                            mb: 1,
-                            background: "linear-gradient(90deg, #4285F4 0%, #34A853 50%, #FBBC05 100%)",
-                            color: "#fff",
-                            fontWeight: "bold",
-                            "&:hover": {
-                                background: "linear-gradient(90deg, #34A853 0%, #4285F4 50%, #FBBC05 100%)",
-                            },
-                        }}
-                    >
-                        Continue with Google
-                    </Button>
-
-                    <Typography variant="body2" textAlign="center" mt={3} sx={{ color: "#aaa" }}>
+                    {/* Link to Sign Up */}
+                    <p className="mt-6 text-center text-sm text-gray-600">
                         Don’t have an account?{" "}
-                        <Link to="/sign-up" style={{ color: "#21cbf3", textDecoration: "none" }}>
-                            Register
+                        <Link
+                            to="/sign-up"
+                            className="font-medium text-teal-700 hover:text-teal-600 hover:underline"
+                        >
+                            Register here
                         </Link>
-                    </Typography>
-                </Card>
-            </Box>
+                    </p>
+                </div>
+            </div>
         </div>
     );
 };

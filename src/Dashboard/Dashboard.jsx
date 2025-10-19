@@ -1,265 +1,197 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Link, Outlet, useNavigate } from "react-router";
-import { AuthContext } from "../Provider/AuthProvider";
-import useAxiosSecure from "../Hooks/useAxiosSecure";
-
+import React, { useState, useEffect } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import useAuth from '../Hooks/useAuth';
+import useUserRole from '../Hooks/useUserRole';
+import { CgSpinner } from 'react-icons/cg';
+import { toast } from 'react-toastify';
 import {
-    AppBar,
-    Toolbar,
-    Typography,
-    IconButton,
-    Drawer,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Box,
-    Divider,
-    CssBaseline,
-    Button,
-} from "@mui/material";
+    HiOutlineHome, HiOutlineLogout, HiOutlineViewGrid, HiOutlineUsers, HiOutlineDocumentText,
+    HiOutlineCurrencyDollar, HiOutlineAnnotation, HiOutlineUserCircle, HiOutlineMenu, HiX,
+    HiOutlineBell
+} from 'react-icons/hi';
+import { FaRegCalendarCheck } from "react-icons/fa";
+import { motion, AnimatePresence } from 'framer-motion';
 
-import MenuIcon from "@mui/icons-material/Menu";
-import PersonIcon from "@mui/icons-material/Person";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import EventAvailableIcon from "@mui/icons-material/EventAvailable";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import HistoryIcon from "@mui/icons-material/History";
-import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
-import HomeIcon from "@mui/icons-material/Home";
+// --- Sidebar Link Component ---
+const SidebarLink = ({ to, icon: Icon, children, end = false }) => (
+    <NavLink
+        to={to}
+        end={end}
+        className={({ isActive }) =>
+            `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
+                ? 'bg-teal-700 text-white font-medium shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`
+        }
+    >
+        <Icon className="w-5 h-5 flex-shrink-0" />
+        <span className="flex-1 truncate">{children}</span>
+    </NavLink>
+);
 
-import { motion } from "framer-motion";
-
-const drawerWidth = 240;
-
-const Dashboard = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [role, setRole] = useState(null);
-    const { user } = useContext(AuthContext);
-    const axiosSecure = useAxiosSecure();
+// --- Main Layout Component ---
+const DashboardLayout = () => {
+    const { user, logOut } = useAuth();
+    const { role, isLoading: roleLoading } = useUserRole();
     const navigate = useNavigate();
+    const location = useLocation();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-    useEffect(() => {
-        const fetchUserRole = async () => {
-            try {
-                if (user?.email) {
-                    const res = await axiosSecure.get(`/users/role/${user.email}`);
-                    setRole(res.data?.role);
-                    // Redirect based on role
-                    if (res.data?.role === "user") {
-                        navigate("/dashboard/analytics");
-                    } else if (res.data?.role === "organizer") {
-                        navigate("/dashboard/add-camp");
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to fetch role:", error);
-            }
-        };
-
-        fetchUserRole();
-    }, [user?.email, axiosSecure, navigate]);
-
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
+    const handleLogOut = () => {
+        logOut()
+            .then(() => {
+                toast.success("Logged out successfully");
+                navigate('/');
+            })
+            .catch((error) => toast.error(error.message));
     };
 
-    // Sidebar Links with Icons
-    const organizerLinks = [
-        { to: "organizer-profile", label: "Organizer Profile", icon: <AssignmentIndIcon /> },
-        { to: "add-camp", label: "Add A Camp", icon: <LocalHospitalIcon /> },
-        { to: "manage-camps", label: "Manage Camps", icon: <EventAvailableIcon /> },
-        { to: "manage-registered-camps", label: "Manage Registered Camps", icon: <HistoryIcon /> },
-    ];
-
-    const userLinks = [
-        { to: "analytics", label: "Analytics", icon: <BarChartIcon /> },
-        { to: "profile", label: "Participant Profile", icon: <PersonIcon /> },
-        { to: "registered-camps", label: "Registered Camps", icon: <EventAvailableIcon /> },
-        { to: "payment-history", label: "Payment History", icon: <HistoryIcon /> },
-    ];
-
-    const drawerContent = (
-        <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4 }}
-        >
-            <Box
-                sx={{
-                    width: drawerWidth,
-                    height: "100%",
-                    p: 2,
-                    background: "linear-gradient(180deg, #e0f7fa, #ffffff)",
-                }}
-            >
-                <Typography
-                    variant="h6"
-                    sx={{
-                        mb: 2,
-                        fontWeight: "bold",
-                        color: "primary.main",
-                        textAlign: "center",
-                    }}
-                >
-                    Medical Camp
-                </Typography>
-                <Divider />
-                <List>
-                    {role === "organizer" &&
-                        organizerLinks.map((item) => (
-                            <motion.div
-                                key={item.to}
-                                whileHover={{ scale: 1.05 }}
-                                transition={{ type: "spring", stiffness: 300 }}
-                            >
-                                <ListItem disablePadding>
-                                    <ListItemButton
-                                        component={Link}
-                                        to={item.to}
-                                        onClick={() => setIsSidebarOpen(false)}
-                                        sx={{
-                                            borderRadius: 2,
-                                            mb: 1,
-                                            "&:hover": {
-                                                bgcolor: "rgba(0, 150, 136, 0.1)",
-                                            },
-                                        }}
-                                    >
-                                        <ListItemIcon sx={{ color: "primary.main" }}>
-                                            {item.icon}
-                                        </ListItemIcon>
-                                        <ListItemText primary={item.label} />
-                                    </ListItemButton>
-                                </ListItem>
-                            </motion.div>
-                        ))}
-
-                    {role === "user" &&
-                        userLinks.map((item) => (
-                            <motion.div
-                                key={item.to}
-                                whileHover={{ scale: 1.05 }}
-                                transition={{ type: "spring", stiffness: 300 }}
-                            >
-                                <ListItem disablePadding>
-                                    <ListItemButton
-                                        component={Link}
-                                        to={item.to}
-                                        onClick={() => setIsSidebarOpen(false)}
-                                        sx={{
-                                            borderRadius: 2,
-                                            mb: 1,
-                                            "&:hover": {
-                                                bgcolor: "rgba(33, 150, 243, 0.1)",
-                                            },
-                                        }}
-                                    >
-                                        <ListItemIcon sx={{ color: "primary.main" }}>
-                                            {item.icon}
-                                        </ListItemIcon>
-                                        <ListItemText primary={item.label} />
-                                    </ListItemButton>
-                                </ListItem>
-                            </motion.div>
-                        ))}
-                </List>
-            </Box>
-        </motion.div>
+    // --- Sidebar Links Definitions ---
+    const organizerLinks = (
+        <>
+            <SidebarLink to="/dashboard/add-camp" icon={HiOutlineDocumentText}> Add A Camp </SidebarLink>
+            <SidebarLink to="/dashboard/manage-camps" icon={HiOutlineDocumentText}> Manage Camps </SidebarLink>
+            <SidebarLink to="/dashboard/manage-registered-camps" icon={HiOutlineUsers}> Manage Registered </SidebarLink>
+        </>
     );
 
+    const participantLinks = (
+        <>
+            <SidebarLink to="/dashboard/registered-camps" icon={FaRegCalendarCheck}> Registered Camps </SidebarLink>
+            <SidebarLink to="/dashboard/payment-history" icon={HiOutlineCurrencyDollar}> Payment History </SidebarLink>
+            <SidebarLink to="/dashboard/feedback-ratings" icon={HiOutlineAnnotation}> Feedback & Ratings </SidebarLink>
+        </>
+    );
+
+    // --- Loading State ---
+    if (roleLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <CgSpinner className="h-16 w-16 animate-spin text-teal-700" />
+            </div>
+        );
+    }
+
+    // --- Redirection Logic ---
+    const defaultDashboardPath = role === 'organizer' ? '/dashboard/overview' : '/dashboard/analytics';
+    useEffect(() => {
+        if (location.pathname === '/dashboard' || location.pathname === '/dashboard/') {
+            navigate(defaultDashboardPath, { replace: true });
+        }
+    }, [location.pathname, navigate, defaultDashboardPath]);
+
+    // Show loading spinner during redirect
+    if (location.pathname === '/dashboard' || location.pathname === '/dashboard/') {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <CgSpinner className="h-16 w-16 animate-spin text-teal-700" />
+            </div>
+        );
+    }
+
+    // --- Helper to get page title from URL ---
+    const getPageTitle = (pathname) => {
+        const routeName = pathname.split('/').pop().replace(/-/g, ' ');
+        if (!routeName || routeName === 'dashboard') {
+            return role === 'organizer' ? 'Overview' : 'Analytics';
+        }
+        return routeName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    };
+
     return (
-        <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "grey.100" }}>
-            <CssBaseline />
+        <div className="flex h-screen bg-gray-100">
+            <Helmet> <title>Dashboard | MediCamp</title> </Helmet>
 
-            {/* Header */}
-            <AppBar
-                position="fixed"
-                sx={{
-                    zIndex: (theme) => theme.zIndex.drawer + 1,
-                    background: "linear-gradient(90deg, #0288d1, #26c6da)",
-                    color: "white",
-                }}
-            >
-                <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <IconButton
-                            color="inherit"
-                            edge="start"
-                            onClick={toggleSidebar}
-                            sx={{ mr: 2, display: { sm: "none" } }}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                        <Typography variant="h6" noWrap fontWeight="bold">
-                            Dashboard
-                        </Typography>
-                    </Box>
+            {/* --- Sidebar --- */}
+            <div className={`fixed inset-0 z-30 bg-black/50 transition-opacity lg:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsSidebarOpen(false)} />
+            <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 transform flex-col border-r border-gray-200 bg-white p-4 transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="mb-6 flex items-center justify-between px-2">
+                    <span className="text-2xl font-bold text-gray-800">Medi<span className="text-teal-700">Camp</span></span>
+                    <button onClick={() => setIsSidebarOpen(false)} className="rounded p-1 text-gray-500 hover:bg-gray-100 lg:hidden" aria-label="Close sidebar"><HiX className="h-6 w-6" /></button>
+                </div>
 
-                    {/* Back to Home Button */}
-                    <Button
-                        component={Link}
-                        to="/"
-                        variant="contained"
-                        startIcon={<HomeIcon />}
-                        sx={{
-                            textTransform: "none",
-                            fontWeight: "bold",
-                            borderRadius: 3,
-                            px: 2,
-                            background: "linear-gradient(90deg, #26c6da, #00acc1)",
-                            "&:hover": {
-                                background: "linear-gradient(90deg, #00acc1, #00838f)",
-                            },
-                        }}
-                    >
-                        Back to Home
-                    </Button>
-                </Toolbar>
-            </AppBar>
+                <nav className="flex-1 space-y-2 overflow-y-auto">
+                    <SidebarLink to={defaultDashboardPath} icon={HiOutlineViewGrid}>
+                        {role === 'organizer' ? 'Overview' : 'Analytics'}
+                    </SidebarLink>
+                    <SidebarLink to="/dashboard/profile" icon={HiOutlineUserCircle}>
+                        My Profile
+                    </SidebarLink>
 
-            {/* Sidebar Drawer for Mobile */}
-            <Drawer
-                variant="temporary"
-                open={isSidebarOpen}
-                onClose={toggleSidebar}
-                ModalProps={{ keepMounted: true }}
-                sx={{
-                    display: { xs: "block", sm: "none" },
-                    "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
-                }}
-            >
-                {drawerContent}
-            </Drawer>
+                    {role === 'organizer' && organizerLinks}
+                    {(role === 'participant' || role === 'user') && participantLinks}
+                </nav>
 
-            {/* Sidebar Drawer for Desktop */}
-            <Drawer
-                variant="permanent"
-                sx={{
-                    display: { xs: "none", sm: "block" },
-                    "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
-                }}
-                open
-            >
-                {drawerContent}
-            </Drawer>
+                <div className="mt-auto space-y-2 border-t pt-4">
+                    <SidebarLink to="/" icon={HiOutlineHome}> Back to Home </SidebarLink>
+                    <button onClick={handleLogOut} className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
+                        <HiOutlineLogout className="w-5 h-5" /> Logout
+                    </button>
+                    <div className="flex items-center gap-3 border-t pt-4 mt-2 px-2">
+                        <img src={user?.photoURL || 'https://placehold.co/100x100/E2E8F0/4A5568?text=User'} alt={user?.displayName} className="w-9 h-9 rounded-full object-cover bg-gray-200" />
+                        <div>
+                            <p className="text-sm font-medium text-gray-800 truncate">{user?.displayName}</p>
+                            <p className="text-xs text-gray-500 capitalize">{role || 'User'}</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
 
-            {/* Main Content */}
-            <Box
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    p: { xs: 2, md: 3 },
-                    mt: 8,
-                    bgcolor: "white",
-                    minHeight: "100vh",
-                }}
-            >
-                <Outlet />
-            </Box>
-        </Box>
+            {/* --- Main Content Area --- */}
+            <main className="flex flex-1 flex-col overflow-y-auto lg:pl-64">
+                <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b bg-white px-4 shadow-sm sm:px-6 lg:px-8">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setIsSidebarOpen(true)} className="rounded p-2 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 lg:hidden" aria-label="Open sidebar">
+                            <HiOutlineMenu className="h-6 w-6" />
+                        </button>
+                        <h1 className="hidden text-xl font-semibold text-gray-800 lg:block">
+                            {getPageTitle(location.pathname)}
+                        </h1>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
+                            <HiOutlineBell className="h-6 w-6" />
+                            <span className="sr-only">Notifications</span>
+                        </button>
+                        <div className="relative">
+                            <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="flex rounded-full bg-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
+                                <span className="sr-only">Open user menu</span>
+                                <img
+                                    className="h-9 w-9 rounded-full object-cover"
+                                    src={user?.photoURL || 'https://placehold.co/100x100/E2E8F0/4A5568?text=User'}
+                                    alt={user?.displayName}
+                                />
+                            </button>
+                            <AnimatePresence>
+                                {isProfileMenuOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                        onMouseLeave={() => setIsProfileMenuOpen(false)}
+                                    >
+                                        <NavLink to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Profile</NavLink>
+                                        <button onClick={handleLogOut} className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50">Logout</button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+                </header>
+                <div className="flex-1 p-6 md:p-8">
+                    <Outlet />
+                </div>
+                <footer className="mt-auto border-t bg-white px-6 py-4 text-center text-sm text-gray-500">
+                    &copy; {new Date().getFullYear()} MediCamp Management System. All rights reserved.
+                </footer>
+            </main>
+        </div>
     );
 };
 
-export default Dashboard;
+export default DashboardLayout;
+
