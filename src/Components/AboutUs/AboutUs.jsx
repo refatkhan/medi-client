@@ -30,7 +30,7 @@ const AboutUs = () => {
 
     return (
         // Section wrapper with a clean white background
-        <div className="bg-white py-16 sm:py-20">
+        <div id="about" className="bg-white py-16 sm:py-20">
             {/* --- CONTENT ALIGNMENT WRAPPER --- */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 

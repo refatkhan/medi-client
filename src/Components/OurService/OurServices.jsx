@@ -62,7 +62,7 @@ const itemVariants = {
 const OurServices = () => {
     return (
         // Section wrapper with a light grey background to alternate
-        <div className="bg-gray-50 py-16 sm:py-20">
+        <div id="services" className="bg-gray-50 py-16 sm:py-20">
             {/* --- CONTENT ALIGNMENT WRAPPER --- */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
