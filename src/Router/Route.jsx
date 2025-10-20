@@ -66,7 +66,7 @@ export const router = createBrowserRouter([
             // to the correct default page, so an index route is not strictly needed.
 
             // --- Organizer Routes ---
-            { path: "profile", element: <OrganizerProfile/>},
+            { path: "profile", element: <OrganizerProfile /> },
             { path: "add-camp", element: <AddCamp /> },
             { path: "manage-camps", element: <ManageCamps /> },
             { path: "overview", element: <OrganizerOverview /> },
