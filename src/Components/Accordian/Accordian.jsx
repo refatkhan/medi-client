@@ -59,7 +59,7 @@ const FAQSection = ({ items }) => {
         // Section wrapper with clean white background
         <div className="bg-white py-16 sm:py-20">
             {/* --- CONTENT ALIGNMENT WRAPPER --- */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w- mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* --- Title and Subtitle --- */}
                 <div className="text-center mb-12">
@@ -73,7 +73,7 @@ const FAQSection = ({ items }) => {
 
                 {/* --- Accordion List --- */}
                 <motion.div
-                    className="max-w-3xl mx-auto"
+                    className="max-w-7xl mx-auto"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.3 }}

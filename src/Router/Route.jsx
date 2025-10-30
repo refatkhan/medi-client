@@ -27,6 +27,7 @@ import FeedbackRatings from "../Dashboard/Participant-Dashboard/FeedbackRatings.
 // --- Auth & Route Protection ---
 import PrivateRoute from "./PrivateRoute.jsx";
 import OrganizerOverview from "../Dashboard/OrganizerOverview.jsx";
+import PaymentPage from "../Dashboard/Participant-Dashboard/PaymentPage.jsx";
 
 export const router = createBrowserRouter([
     {
@@ -79,7 +80,7 @@ export const router = createBrowserRouter([
             { path: "registered-camps", element: <RegisteredCamps /> },
             { path: "payment-history", element: <PaymentHistory /> },
             { path: "feedback-ratings", element: <FeedbackRatings /> },
-
+            { path: "payment/:registrationId", element: <PaymentPage /> },
             // Catch-all for any invalid dashboard routes (e.g., /dashboard/invalidpage)
             { path: "*", element: <ErrorPage /> },
         ],

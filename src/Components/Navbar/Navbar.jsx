@@ -12,12 +12,12 @@ import { BiLogOutCircle, BiLayout, BiLogIn } from "react-icons/bi";
 const Navbar = () => {
     // --- Existing Logic ---
     const { role } = useUserRole();
-    const { user, logOut, signIn } = useContext(AuthContext); // Get signIn from context
+    const { user, logOut, signIn } = useContext(AuthContext);
     const navigate = useNavigate();
     const { pathname, hash } = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [isJoinUsOpen, setIsJoinUsOpen] = useState(false); // State for the new dropdown
+    const [isJoinUsOpen, setIsJoinUsOpen] = useState(false);
 
     const handleLogOut = () => {
         logOut()
@@ -32,7 +32,6 @@ const Navbar = () => {
         setIsProfileOpen(false);
     };
 
-    // --- NEW: Demo Login Handler ---
     const handleDemoLogin = async (demoRole) => {
         const credentials = {
             admin: { email: 'demo.admin@medicamp.com', password: 'password123' },
@@ -51,15 +50,22 @@ const Navbar = () => {
         setIsJoinUsOpen(false);
     };
 
-    // --- PRESERVED LINK STRUCTURE ---
-    // All links are visible to all users, as in your original structure
-    const navLinks = [
+    // --- UPDATED: Link structure now follows the assignment guidelines ---
+    const loggedOutLinks = [
+        { text: 'Home', href: '/' },
+        { text: 'Available Camps', href: '/available-camps' },
+        { text: 'Contact', href: '/#contact' },
+    ];
+
+    const loggedInLinks = [
         { text: 'Home', href: '/' },
         { text: 'Available Camps', href: '/available-camps' },
         { text: 'Services', href: '/#services' },
         { text: 'About Us', href: '/#about' },
         { text: 'Contact', href: '/#contact' },
     ];
+
+    const linksToDisplay = user ? loggedInLinks : loggedOutLinks;
 
     const dropdownVariants = {
         open: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 20 } },
@@ -80,7 +86,7 @@ const Navbar = () => {
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-baseline space-x-6">
-                        {navLinks.map((link) => {
+                        {linksToDisplay.map((link) => {
                             const LinkComponent = isHashLink(link.href) ? HashLink : Link;
                             const isActive = pathname === link.href || (isHashLink(link.href) && pathname === '/' && hash === link.href.substring(1));
                             return (
@@ -139,7 +145,7 @@ const Navbar = () => {
                 {isMobileMenuOpen && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-gray-200 dark:border-slate-700 md:hidden">
                         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                            {navLinks.map((link) => {
+                            {linksToDisplay.map((link) => {
                                 const LinkComponent = isHashLink(link.href) ? HashLink : Link;
                                 const isActive = pathname === link.href || (isHashLink(link.href) && pathname === '/' && hash === link.href.substring(1));
                                 return (
